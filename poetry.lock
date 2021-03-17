@@ -214,7 +214,7 @@ testing = ["Django (<3.1)", "colorama", "docopt", "pytest (<6.0.0)"]
 name = "mypy"
 version = "0.812"
 description = "Optional static typing for Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.5"
 
@@ -230,7 +230,7 @@ dmypy = ["psutil (>=4.0)"]
 name = "mypy-extensions"
 version = "0.4.3"
 description = "Experimental type system extensions for programs checked with the mypy typechecker."
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -408,10 +408,24 @@ sniffio = "*"
 sortedcontainers = "*"
 
 [[package]]
+name = "trio-typing"
+version = "0.5.0"
+description = "Static type checking support for Trio and related projects"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+mypy = {version = ">=0.780", markers = "implementation_name == \"cpython\""}
+mypy-extensions = ">=0.4.2"
+trio = ">=0.16.0"
+typing-extensions = ">=3.7.4"
+
+[[package]]
 name = "typed-ast"
 version = "1.4.2"
 description = "a fork of Python 2 and 3 ast modules with type comment support"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -434,7 +448,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "91e8df5cf6e7cb2761bd746063dbfa71c3bac492851bf7b4052244971e71e69c"
+content-hash = "671b7caf80587a35ad1b39b208b3edebde2d4ffb99fef2952e2e561b459d0193"
 
 [metadata.files]
 appdirs = [
@@ -675,6 +689,10 @@ traitlets = [
 trio = [
     {file = "trio-0.18.0-py3-none-any.whl", hash = "sha256:a42af0634ba729cbfe8578be058750c6471dac19fbc7167ec6a3ca3f966fb424"},
     {file = "trio-0.18.0.tar.gz", hash = "sha256:87a66ae61f27fe500c9024926a9ba482c07e1e0f56380b70a264d19c435ba076"},
+]
+trio-typing = [
+    {file = "trio-typing-0.5.0.tar.gz", hash = "sha256:f2007df617a6c26a2294db0dd63645b5451149757e1bde4cb8dbf3e1369174fb"},
+    {file = "trio_typing-0.5.0-py3-none-any.whl", hash = "sha256:35f1bec8df2150feab6c8b073b54135321722c9d9289bbffa78a9a091ea83b72"},
 ]
 typed-ast = [
     {file = "typed_ast-1.4.2-cp35-cp35m-manylinux1_i686.whl", hash = "sha256:7703620125e4fb79b64aa52427ec192822e9f45d37d4b6625ab37ef403e1df70"},
