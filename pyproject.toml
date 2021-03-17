@@ -1,0 +1,22 @@
+[tool.poetry]
+authors = ["Ian Chen <ianre657@gmail.com>"]
+description = "trio monitor"
+license = "MIT"
+name = "trio-monitor"
+version = "0.1.0"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+rich = "^9.13.0"
+trio = "^0.18.0"
+
+[tool.poetry.dev-dependencies]
+autoflake = "^1.4"
+black = "^20.8b1"
+ipdb = "^0.13.7"
+isort = "^5.7.0"
+mypy = "^0.812"
+
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0"]
