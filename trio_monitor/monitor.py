@@ -1,11 +1,12 @@
 import json
 from collections import defaultdict
+from pathlib import Path
+from typing import Optional
 
 import trio
 from rich.console import Console
 from trio.lowlevel import Task
 from trio_typing import Nursery
-from pathlib import Path
 
 console = Console()
 
@@ -29,8 +30,7 @@ class TrioStatusLogger:
     def __init__(self):
         self.registry = TaskRegistry()
 
-    def get_system_status_json(self):
-        root_task = trio.lowlevel.current_root_task()
+    def get_system_status_json(self, root_task: Task):
         result = self.task_to_json(root_task)
         return result
 
@@ -55,11 +55,12 @@ class TaskLoggingMonitor(trio.abc.Instrument):
     def __init__(self):
         self.event_id = 0
         self.logger = TrioStatusLogger()
+        self.client_root_task: Optional[Task] = None
 
     def log_status(self, suffix: str = ""):
         eid = self.event_id
         self.event_id += 1
-        dic = self.logger.get_system_status_json()
+        dic = self.logger.get_system_status_json(root_task=self.client_root_task)
         actual_suffix = f"-{suffix}" if suffix != "" else ""
         Path("./status").mkdir(exist_ok=True)
         with open(f"./status/event-{eid}{actual_suffix}.json", "w") as outfile:
@@ -67,6 +68,8 @@ class TaskLoggingMonitor(trio.abc.Instrument):
 
     def task_spawned(self, task):
         if "trio/_core" not in task.coro.cr_frame.f_code.co_filename:
+            if not self.client_root_task:
+                self.client_root_task = task
             self.log_status(suffix="spawned")
 
     def task_exited(self, task):
