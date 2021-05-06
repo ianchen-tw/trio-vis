@@ -4,6 +4,9 @@ PROJECT = trio_monitor
 run:
 	poetry run python main.py
 
+test:
+	poetry run pytest
+
 
 # TODO: add pycodestyle
 better:

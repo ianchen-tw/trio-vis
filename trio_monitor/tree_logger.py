@@ -1,6 +1,5 @@
 import json
 import time
-from collections import defaultdict
 from pathlib import Path
 from typing import Optional
 
@@ -10,32 +9,19 @@ from rich.tree import Tree
 from trio.lowlevel import Task
 from trio_typing import Nursery
 
+from trio_monitor.task import TaskRegistry
+
 console = Console()
-
-
-class TaskRegistry:
-    def __init__(self):
-        self.serial_num_from_name = defaultdict(int)
-        self.registered_tasks = defaultdict(defaultdict)
-
-    def get_task_name(self, task: Task):
-        if task not in self.registered_tasks:
-            serial_num = self.serial_num_from_name[task.name]
-            self.serial_num_from_name[task.name] += 1
-            self.registered_tasks[task]["serial_num"] = serial_num
-        else:
-            serial_num = self.registered_tasks[task]["serial_num"]
-        return f"{task.name}-{serial_num}"
 
 
 class TrioJsonLogger:
     def __init__(self):
         self.registry = TaskRegistry()
 
-    def dump_state_from_task(self, root_task: Task, file_name: str):
+    def dump_state_from_task(self, root_task: Task, name: str):
         data = self.task_to_json(root_task)
         Path("./status").mkdir(exist_ok=True)
-        with open(f"./status/{file_name}.json", "w") as outfile:
+        with open(f"./status/{name}.json", "w") as outfile:
             json.dump(data, outfile, indent=4)
 
     def nursery_to_json(self, nursery: Nursery):
@@ -79,10 +65,9 @@ class TrioTerminalLogger:
 
 
 class TaskLoggingMonitor(trio.abc.Instrument):
-    def __init__(self):
+    def __init__(self, logger):
         self.event_id = 0
-        self.json_logger = TrioJsonLogger()
-        self.term_logger = TrioTerminalLogger()
+        self.logger = logger
         self.client_root_task: Optional[Task] = None
 
     def get_new_event_id(self) -> int:
@@ -90,12 +75,11 @@ class TaskLoggingMonitor(trio.abc.Instrument):
         self.event_id += 1
         return eid
 
-    def dump(self, root_task, name):
-        self.json_logger.dump_state_from_task(
+    def dump(self, name):
+        self.logger.dump_state_from_task(
             self.client_root_task,
-            file_name=name,
+            name=name,
         )
-        # self.term_logger.dump_state_from_task(self.client_root_task, name=name)
 
     def task_spawned(self, task):
         # log from user root
@@ -103,10 +87,10 @@ class TaskLoggingMonitor(trio.abc.Instrument):
             if not self.client_root_task:
                 self.client_root_task = task
             name = f"event-{self.get_new_event_id()}-spawned"
-            self.dump(self.client_root_task, name)
+            self.dump(name)
             time.sleep(0.5)
 
     def task_exited(self, task):
         # if "trio/_core" not in task.coro.cr_frame.f_code.co_filename:
         name = f"event-{self.get_new_event_id()}-exited"
-        self.dump(self.client_root_task, name)
+        self.dump(name)
