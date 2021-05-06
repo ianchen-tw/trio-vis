@@ -5,6 +5,11 @@ license = "MIT"
 name = "trio-monitor"
 version = "0.1.0"
 
+[tool.pytest.ini_options]
+markers = [
+  "dev: marks tests as developing (deselect with '-m \"not dev\"')",
+]
+
 [tool.poetry.dependencies]
 python = "^3.8"
 rich = "^9.13.0"
