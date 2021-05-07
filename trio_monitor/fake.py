@@ -3,6 +3,10 @@ from typing import Dict, List, Optional, Union
 from rich.console import Console, ConsoleOptions, RenderResult
 from rich.tree import Tree
 
+""" Generate Identical Fake data for developing & test
+Provide a simpler interface for constructing trio task tree & specifying nodes by their name
+"""
+
 
 class Nursery:
     """Represent the trio internal type.
