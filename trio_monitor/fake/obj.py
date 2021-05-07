@@ -12,7 +12,7 @@ class Nursery:
 
     def __init__(self, name: str):
         self.child_tasks: List["Task"] = []
-        self._name: str = name
+        self.name: str = name
         self._tree_root: Optional["Task"] = None
 
     @property
@@ -41,8 +41,8 @@ class Nursery:
     @property
     def rich_tag(self):
         ret = "[bold magenta]Nursery"
-        if self._name is not None:
-            ret += f": [white]{self._name}"
+        if self.name is not None:
+            ret += f": [white]{self.name}"
         return ret
 
     def _rich_node(self, parent: Tree):
@@ -59,7 +59,7 @@ class Task:
 
     def __init__(self, name: str, tree_root: Optional["Task"] = None):
         self.child_nurseries: List[Nursery] = []
-        self._name: str = name
+        self.name: str = name
 
         # Each node would register itself with to root node's dict, so we could referece
         # node by it's name
@@ -87,7 +87,7 @@ class Task:
         else:
             # become a new root
             if not self.is_root:
-                del self._tree_root.nodes[self._name]
+                del self._tree_root.nodes[self.name]
             self._tree_root = self
             for n in self.child_nurseries:
                 n.tree_root = self
@@ -100,14 +100,14 @@ class Task:
     def register(self, node: Union[Nursery, "Task"]):
         if not self.is_root:
             raise RuntimeError("Could only call register on a root task")
-        if node._name in self.nodes:
-            raise ValueError(f"Registered name already exists: {node._name}")
-        self.nodes[node._name] = node
+        if node.name in self.nodes:
+            raise ValueError(f"Registered name already exists: {node.name}")
+        self.nodes[node.name] = node
 
     def __repr__(self):
         if len(self.child_nurseries) > 0:
-            return f"<Task {self.child_nurseries}>"
-        return "<Task>"
+            return f"<Task:{self.name} {self.child_nurseries}>"
+        return f"<Task: {self.name}>"
 
     @property
     def is_root(self) -> bool:
@@ -116,8 +116,8 @@ class Task:
     @property
     def rich_tag(self):
         ret = "[bold yellow]Task"
-        if self._name is not None:
-            ret += f": [white]{self._name}"
+        if self.name is not None:
+            ret += f": [white]{self.name}"
         return ret
 
     def _rich_node(self, parent: Tree):
