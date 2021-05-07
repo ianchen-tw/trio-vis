@@ -1,8 +1,8 @@
 from typing import Optional
 
-from .fake import Task, Nursery, gen_tree_from_json
-from typing import Optional
 import rich
+
+from .fake import Nursery, Task, gen_tree_from_json
 
 event_id = 0
 
@@ -29,6 +29,17 @@ def find_parent_nursery(
 
 
 class Monitor:
+    """Capture cases
+    + -- task spawned
+        1. Child root task spawned
+        2. A new nursery started
+        3. Task spawnd under a nursery
+    + -- task exited
+        4. Task exited but it's parent nursery still exists
+        5. Task exited with ended it's child nursery
+        6. child root exited
+    """
+
     def __init__(self):
         self.root_task: Optional[Task] = None
 
@@ -43,7 +54,7 @@ class Monitor:
             return
         if len(parent_nursery.child_tasks) == 1:
             log(f"nursery started: {parent_nursery}")
-            log(f"task started: {task}, parent:{parent_nursery}")
+        log(f"task started: {task}, parent:{parent_nursery}")
 
     def task_exited(self, task):
         pass
