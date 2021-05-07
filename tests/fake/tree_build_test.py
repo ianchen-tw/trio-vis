@@ -1,18 +1,15 @@
-from trio_monitor.fake import Task, gen_tree_from_json, Nursery
-from rich.tree import Tree
-import rich
-from typing import Dict
+from typing import Dict, cast
 
-import pytest
+from trio_monitor.fake import Nursery, Task, gen_tree_from_json
 
 
 def test_build_tree(tmpl1: Dict):
-    tree: Task = gen_tree_from_json(tmpl1)
+    tree: Task = cast(Task, gen_tree_from_json(tmpl1))
 
-    t1: Task = tree.nodes["t1"]
+    t1: Task = cast(Task, tree.nodes["t1"])
     assert len(t1.child_nurseries) == 1
 
-    n1: Nursery = tree.nodes["n1"]
+    n1: Nursery = cast(Nursery, tree.nodes["n1"])
     assert len(n1.child_tasks) == 2
 
 

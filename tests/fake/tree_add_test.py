@@ -1,16 +1,15 @@
-from trio_monitor.fake import Task, gen_tree_from_json, Nursery
-from rich.tree import Tree
-import rich
-
-from typing import Dict
+from typing import Dict, cast
 
 import pytest
+import rich
+
+from trio_monitor.fake import Nursery, Task, gen_tree_from_json
 
 
 @pytest.mark.dev
 def test_add_task_to_nursery(tmpl1: Dict):
     tree1 = gen_tree_from_json(tmpl1)
-    n1: Nursery = tree1.nodes["n1"]
+    n1: Nursery = cast(Nursery, tree1.nodes["n1"])
     print("")
     rich.print(tree1)
     t4 = Task(name="t4")

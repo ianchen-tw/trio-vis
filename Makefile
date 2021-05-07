@@ -1,5 +1,5 @@
 .PHONY: better run
-PROJECT = trio_monitor
+PROJECT = .
 
 run:
 	poetry run python main.py

@@ -1,4 +1,5 @@
 import random
+
 import trio
 
 CONN_SUCCESS_RATE = 0.15
@@ -72,7 +73,7 @@ async def open_tcp_socket(hostname, port, program_scope, max_wait_time=0.1):
 
 
 async def main():
-    import ipdb
+    pass
 
     # ipdb.set_trace()
 

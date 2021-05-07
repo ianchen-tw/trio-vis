@@ -1,8 +1,9 @@
-from trio_monitor import tree_logger
-from user_programs.happyeyeball import main as happyeyeball
+import random
 
 import trio
-import random
+
+from trio_monitor import tree_logger
+from user_programs.happyeyeball import main as happyeyeball
 
 
 def main():
