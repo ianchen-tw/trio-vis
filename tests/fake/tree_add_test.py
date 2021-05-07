@@ -1,12 +1,10 @@
 from typing import Dict, cast
 
-import pytest
 import rich
 
 from trio_monitor.fake import Nursery, Task, gen_tree_from_json
 
 
-@pytest.mark.dev
 def test_add_task_to_nursery(tmpl1: Dict):
     tree1 = gen_tree_from_json(tmpl1)
     n1: Nursery = cast(Nursery, tree1.nodes["n1"])
