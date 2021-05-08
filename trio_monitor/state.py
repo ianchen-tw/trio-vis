@@ -1,6 +1,9 @@
 import typing
 from typing import Dict, Optional, TypeVar, cast
 
+from rich.console import Console, ConsoleOptions, RenderResult
+from rich.tree import Tree
+
 """ Description Node/Tree
 
     We trace the current system state by keeping our own task tree
@@ -30,18 +33,30 @@ class TrioTask(typing.Protocol):
 TrioNode = TypeVar("TrioNode", TrioNursery, TrioTask)
 
 
+class TaskNotFound(Exception):
+    pass
+
+
+class NurseryNotFound(Exception):
+    pass
+
+
 class DescNode:
     def __init__(self, node: TrioNode):
         self.name: str = node.name
 
         self.parent: Optional[DescNode] = None
-        self.childs: typing.List[DescNode] = []
+        self.children: typing.List[DescNode] = []
 
         # ref to the actual node
         self.ref: typing.Union[TrioTask, TrioNursery] = node
 
     def __repr__(self):
-        return f"<DescNode:{self.name}: {self.childs}>"
+        return f"<DescNode:{self.name}: {self.children}>"
+
+    def _rich_node(self, parent: Tree):
+        cur_node = parent.add(f"[yellow] name: {self.name}")
+        [n._rich_node(parent=cur_node) for n in self.children]
 
 
 class DescTree:
@@ -54,13 +69,60 @@ class DescTree:
     def __repr__(self):
         return f"{self.root}"
 
-    def parent_nursery(self, task: TrioTask) -> Optional[TrioNursery]:
+    def __rich_console__(
+        self, console: Console, options: ConsoleOptions
+    ) -> RenderResult:
+        """Support Python `rich` lib"""
+        root = Tree("DescTree")
+        self.root._rich_node(parent=root)
+        yield root
+
+    def get_parent_nursery(self, task: TrioTask) -> Optional[TrioNursery]:
+        """Directly retrieve the parent nursery of a task"""
         node = self.ref_2node.get(task, None)
         if node is not None:
             if node.parent is not None:
                 nursery = cast(TrioNursery, node.parent.ref)
                 return nursery
         return None
+
+    def find_parent_nursery_from_trio(self, target: TrioTask) -> Optional[TrioNursery]:
+        """Return the parent nursery of the target task from trio"""
+
+        def find_parent_nursery(
+            tree_root: TrioTask,
+            target: TrioTask,
+        ):
+            for n in tree_root.child_nurseries:
+                if target in n.child_tasks:
+                    return n
+                else:
+                    for t in n.child_tasks:
+                        nursery = find_parent_nursery(t, target)
+                        if nursery:
+                            return nursery
+            return None
+
+        # root.ref point to the root of a trio task tree
+        nursery = find_parent_nursery(cast(TrioTask, self.root.ref), target)
+        return nursery
+
+    # def remove_task(self, task: TrioTask):
+    #     """remove a task from cache
+    #     Caution: Client must contains task
+    #     """
+    #     node = self.ref_2node.get(task, None)
+    #     if node is None:
+    #         raise TaskNotFound(task)
+    #     self.ref_2node.pop(task)
+    #     self.nodes.pop(node.name)
+
+    # def remove_nursery(self, nursery: TrioNursery):
+    #     node = self.ref_2node.get(nursery, None)
+    #     if node is None:
+    #         raise NurseryNotFound(nursery)
+    #     self.ref_2node.pop(nursery)
+    #     self.nodes.pop(node.name)
 
     @classmethod
     def build(cls, root_task: TrioTask) -> "DescTree":
@@ -77,7 +139,7 @@ class DescTree:
             for n in task.child_nurseries:
                 desc_n = DescNode(n)
                 desc_n.parent = desc_task
-                desc_task.childs.append(desc_n)
+                desc_task.children.append(desc_n)
                 add_cache(desc_n)
                 build_nursery(desc_n)
 
@@ -86,7 +148,7 @@ class DescTree:
             for t in nursery.child_tasks:
                 desc_t = DescNode(t)
                 desc_t.parent = desc_nursery
-                desc_nursery.childs.append(desc_t)
+                desc_nursery.children.append(desc_t)
                 add_cache(desc_t)
                 build_task(desc_t)
 
