@@ -33,14 +33,6 @@ class TrioTask(typing.Protocol):
 TrioNode = TypeVar("TrioNode", TrioNursery, TrioTask)
 
 
-class TaskNotFound(Exception):
-    pass
-
-
-class NurseryNotFound(Exception):
-    pass
-
-
 class DescNode:
     def __init__(self, node: TrioNode):
         self.name: str = node.name
@@ -107,22 +99,21 @@ class DescTree:
         nursery = find_parent_nursery(cast(TrioTask, self.root.ref), target)
         return nursery
 
-    # def remove_task(self, task: TrioTask):
-    #     """remove a task from cache
-    #     Caution: Client must contains task
-    #     """
-    #     node = self.ref_2node.get(task, None)
-    #     if node is None:
-    #         raise TaskNotFound(task)
-    #     self.ref_2node.pop(task)
-    #     self.nodes.pop(node.name)
+    def remove_node(self, node: DescNode):
+        if node != self.nodes[node.name]:
+            raise RuntimeError(f"bug: node not exists in tree: {node}")
+        if self.ref_2node.get(node.ref, None) is None:
+            raise RuntimeError(f"bug: ref not exists in tree: {node.ref}")
 
-    # def remove_nursery(self, nursery: TrioNursery):
-    #     node = self.ref_2node.get(nursery, None)
-    #     if node is None:
-    #         raise NurseryNotFound(nursery)
-    #     self.ref_2node.pop(nursery)
-    #     self.nodes.pop(node.name)
+        self.ref_2node.pop(node.ref)
+        self.nodes.pop(node.name)
+
+        # unregister all children in the tree
+        for child in node.children:
+            self.remove_node(child)
+
+        if node.parent:
+            node.parent.children.remove(node)
 
     @classmethod
     def build(cls, root_task: TrioTask) -> "DescTree":
