@@ -99,12 +99,21 @@ class DescTree:
         nursery = find_parent_nursery(cast(TrioTask, self.root.ref), target)
         return nursery
 
-    def remove_node(self, node: DescNode):
+    def ensure_node_in_tree(self, node: DescNode):
         if node != self.nodes[node.name]:
             raise RuntimeError(f"bug: node not exists in tree: {node}")
         if self.ref_2node.get(node.ref, None) is None:
             raise RuntimeError(f"bug: ref not exists in tree: {node.ref}")
 
+    def ensure_node_not_in_tree(self, node: DescNode):
+        if node in self.nodes:
+            raise RuntimeError(f"bug: node already exists in tree: {node}")
+        if self.ref_2node.get(node.ref, None) is not None:
+            raise RuntimeError(f"bug: ref already exists in tree: {node.ref}")
+
+    def remove_node(self, node: DescNode):
+        """Remove node from tree, also break the link to it's parent"""
+        self.ensure_node_in_tree(node)
         self.ref_2node.pop(node.ref)
         self.nodes.pop(node.name)
 
@@ -115,11 +124,24 @@ class DescTree:
         if node.parent:
             node.parent.children.remove(node)
 
-        # if we remove the only task from parent nursery,
-        # the parent nursery would also be removed
-        # trio only notify us the creation/removement of tasks, but not nurseries
-        if len(node.parent.children) == 0:
-            self.remove_node(node.parent)
+            # if we remove the only task from parent nursery,
+            # the parent nursery would also be removed
+            # trio only notify us the creation/removement of tasks, but not nurseries
+            if len(node.parent.children) == 0:
+                self.remove_node(node.parent)
+            node.parent = None
+
+    def add_node(self, node: DescNode, parent: DescNode):
+        self.ensure_node_in_tree(parent)
+        self.ensure_node_not_in_tree(node)
+
+        if node in parent.children:
+            raise RuntimeError(f"bug add same child({node}) to parent{parent}")
+        node.parent = parent
+        parent.children.append(node)
+
+        self.ref_2node[node.ref] = node
+        self.nodes[node.name] = node
 
     @classmethod
     def build(cls, root_task: TrioTask) -> "DescTree":
