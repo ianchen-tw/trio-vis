@@ -42,3 +42,5 @@ def test_find_parent_nursery(tmpl1):
     t2 = internal_tree.nodes["t2"]
     parent_nursery = tree.parent_nursery(t2)
     assert parent_nursery == internal_tree.nodes["n1"]
+
+    assert tree.parent_nursery(internal_tree) is None
