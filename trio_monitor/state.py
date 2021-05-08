@@ -115,6 +115,12 @@ class DescTree:
         if node.parent:
             node.parent.children.remove(node)
 
+        # if we remove the only task from parent nursery,
+        # the parent nursery would also be removed
+        # trio only notify us the creation/removement of tasks, but not nurseries
+        if len(node.parent.children) == 0:
+            self.remove_node(node.parent)
+
     @classmethod
     def build(cls, root_task: TrioTask) -> "DescTree":
         """Build a tree of from source"""
