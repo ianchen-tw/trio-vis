@@ -3,7 +3,7 @@ from typing import Optional
 import rich
 
 from .fake import Nursery, Task, gen_tree_from_json
-from .state import DescTree, DescNode
+from .state import DescNode, DescTree
 
 event_id = 0
 
