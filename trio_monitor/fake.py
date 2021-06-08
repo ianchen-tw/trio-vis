@@ -37,10 +37,15 @@ class Nursery:
             if self._tree_root:
                 task.tree_root = self.tree_root
 
+    def _remove_task(self, task: "Task"):
+        if task not in self.child_tasks:
+            raise Exception("Remove unexists child task")
+        self.child_tasks.remove(task)
+
     def __repr__(self):
         if len(self.child_tasks) > 0:
-            return f"<Nursery {self.child_tasks}>"
-        return f"Nursery"
+            return f"<Nursery({self.name}) {self.child_tasks}>"
+        return f"<Nursery({self.name})>"
 
     @property
     def rich_tag(self):
