@@ -1,18 +1,22 @@
 from typing import cast
 
 import pytest
+import rich
 
-from trio_monitor.fake import Task, gen_tree_from_json
-from trio_monitor.state import DescNode, DescTree
+from trio_monitor.desc_tree import DescNode, DescTree
+from trio_monitor.trio_fake import FakeTrioTask, gen_tree_from_json
 
 
-# @pytest.mark.dev
+@pytest.mark.dev
 def test_find_parent_nursery(tmpl1):
-    internal_tree: Task = cast(Task, gen_tree_from_json(tmpl1))
+    internal_tree: FakeTrioTask = cast(FakeTrioTask, gen_tree_from_json(tmpl1))
     tree = DescTree.build(internal_tree)
+    print("start")
+    rich.print(internal_tree)
 
-    t4 = Task(name="t4")
+    t4 = FakeTrioTask(name="t4")
     internal_tree.nodes["n1"]._add_task(t4)
+    rich.print(internal_tree)
 
     nursery = tree.find_parent_nursery_from_trio(t4)
     assert nursery is not None
@@ -20,7 +24,7 @@ def test_find_parent_nursery(tmpl1):
 
 
 def test_remove_nursery(tmpl1):
-    internal_tree: Task = cast(Task, gen_tree_from_json(tmpl1))
+    internal_tree: FakeTrioTask = cast(FakeTrioTask, gen_tree_from_json(tmpl1))
     tree = DescTree.build(internal_tree)
 
     n1 = internal_tree.nodes["n1"]
@@ -36,7 +40,7 @@ def test_remove_nursery(tmpl1):
 
 
 def test_remove_task(tmpl1):
-    internal_tree: Task = cast(Task, gen_tree_from_json(tmpl1))
+    internal_tree: FakeTrioTask = cast(FakeTrioTask, gen_tree_from_json(tmpl1))
     tree = DescTree.build(internal_tree)
 
     t2 = internal_tree.nodes["t2"]
@@ -48,12 +52,12 @@ def test_remove_task(tmpl1):
     assert tree.ref_2node.get(t2, None) is None
 
 
-@pytest.mark.dev
+# @pytest.mark.dev
 def test_add_task(tmpl1):
-    internal_tree: Task = cast(Task, gen_tree_from_json(tmpl1))
+    internal_tree: FakeTrioTask = cast(FakeTrioTask, gen_tree_from_json(tmpl1))
     tree = DescTree.build(internal_tree)
 
-    t4 = Task(name="t4")
+    t4 = FakeTrioTask(name="t4")
 
     internal_tree.nodes["n1"]._add_task(t4)
     t4_node = DescNode(t4)

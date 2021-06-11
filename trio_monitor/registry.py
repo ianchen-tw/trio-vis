@@ -1,6 +1,10 @@
 from collections import defaultdict
 
-from trio.lowlevel import Task
+from .protocol import TrioTask
+
+"""
+Name Trio objects
+"""
 
 
 class TaskRegistry:
@@ -8,7 +12,7 @@ class TaskRegistry:
         self.serial_num_from_name = defaultdict(int)
         self.registered_tasks = defaultdict(defaultdict)
 
-    def get_task_name(self, task: Task):
+    def get_task_name(self, task: TrioTask):
         if task not in self.registered_tasks:
             serial_num = self.serial_num_from_name[task.name]
             self.serial_num_from_name[task.name] += 1

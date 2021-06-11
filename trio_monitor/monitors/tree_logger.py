@@ -6,10 +6,9 @@ from typing import Optional
 import trio
 from rich.console import Console
 from rich.tree import Tree
-from trio.lowlevel import Task
-from trio_typing import Nursery
 
-from trio_monitor.task import TaskRegistry
+from trio_monitor.protocol import TrioNursery, TrioTask
+from trio_monitor.registry import TaskRegistry
 
 console = Console()
 
@@ -18,20 +17,20 @@ class TrioJsonLogger:
     def __init__(self):
         self.registry = TaskRegistry()
 
-    def dump_state_from_task(self, root_task: Task, name: str):
+    def dump_state_from_task(self, root_task: TrioTask, name: str):
         data = self.task_to_json(root_task)
         Path("./status").mkdir(exist_ok=True)
         with open(f"./status/{name}.json", "w") as outfile:
             json.dump(data, outfile, indent=4)
 
-    def nursery_to_json(self, nursery: Nursery):
+    def nursery_to_json(self, nursery: TrioNursery):
         return {
             "id": id(nursery),
             "name": "<nursery>",
             "tasks": [self.task_to_json(child) for child in nursery.child_tasks],
         }
 
-    def task_to_json(self, task: Task):
+    def task_to_json(self, task: TrioTask):
         return {
             "id": id(task),
             "name": self.registry.get_task_name(task),
@@ -46,17 +45,17 @@ class TrioTerminalLogger:
         self.console = Console()
         self.registry = TaskRegistry()
 
-    def dump_state_from_task(self, root_task: Task, name):
+    def dump_state_from_task(self, root_task: TrioTask, name):
         root_node = Tree(f"[b green]{name}")
         self.append_task_to_node(root_task, parent_node=root_node)
         console.print(root_node)
 
-    def append_nursery_to_node(self, nursery: Nursery, parent_node):
+    def append_nursery_to_node(self, nursery: TrioNursery, parent_node):
         nursery_node = parent_node.add("[bold yellow]Nursery")
         for t in nursery.child_tasks:
             self.append_task_to_node(task=t, parent_node=nursery_node)
 
-    def append_task_to_node(self, task: Task, parent_node):
+    def append_task_to_node(self, task: TrioTask, parent_node):
         task_node = parent_node.add(
             "[bold magenta]" + self.registry.get_task_name(task)
         )
@@ -68,7 +67,7 @@ class TaskLoggingMonitor(trio.abc.Instrument):
     def __init__(self, logger):
         self.event_id = 0
         self.logger = logger
-        self.client_root_task: Optional[Task] = None
+        self.client_root_task: Optional[TrioTask] = None
 
     def get_new_event_id(self) -> int:
         eid = self.event_id

@@ -4,7 +4,9 @@ from typing import Dict, Optional, TypeVar, cast
 from rich.console import Console, ConsoleOptions, RenderResult
 from rich.tree import Tree
 
-""" Description Node/Tree
+from .protocol import TrioNursery, TrioTask
+
+""" Description Tree
 
     We trace the current system state by keeping our own task tree
 
@@ -16,26 +18,15 @@ from rich.tree import Tree
 """
 
 
-class TrioNursery(typing.Protocol):
-    """Represent trio's internal `Nursery` type"""
-
-    name: str
-    child_tasks: typing.List["TrioTask"]
-
-
-class TrioTask(typing.Protocol):
-    """Represent trio's internal `Task` type"""
-
-    name: str
-    child_nurseries: typing.List["TrioNursery"]
-
-
 TrioNode = TypeVar("TrioNode", TrioNursery, TrioTask)
 
 
 class DescNode:
     def __init__(self, node: TrioNode):
-        self.name: str = node.name
+        if getattr(node, "name", None) is None:
+            self.name = "unknown"
+        else:
+            self.name = node.name
 
         self.parent: Optional[DescNode] = None
         self.children: typing.List[DescNode] = []
