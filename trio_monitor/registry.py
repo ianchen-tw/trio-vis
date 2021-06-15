@@ -55,6 +55,14 @@ class RegisteredSCInfo:
 
 
 class SCRegistry:
+    """Help to register Structured-Concurrency-related objects
+
+    Also store some meaningful information about those objects
+    inside the registry
+
+    here we would register Trio's Task/Nursery object
+    """
+
     def __init__(self):
         self.serial_drawer = SerialNumberGen()
         self.registered: Dict[Any, RegisteredSCInfo] = {}
@@ -62,9 +70,17 @@ class SCRegistry:
     def get_name(self, obj: Union[TrioTask, TrioNursery]):
         if obj in self.registered:
             return self.registered[obj].name
+        return self.get_info(obj).name
+
+    def get_info(self, obj: Union[TrioTask, TrioNursery]) -> RegisteredSCInfo:
+        """Get object information
+        register it if not yet stored
+        """
+        if obj in self.registered:
+            return self.registered[obj]
 
         objType = parseObjectType(obj)
-
+        info: RegisteredSCInfo
         if objType is TYPE_TRIO_TASK:
             info = RegisteredSCInfo.from_task(cast(TrioTask, obj), self.serial_drawer)
         elif objType is TYPE_TRIO_NURSERY:
@@ -74,7 +90,7 @@ class SCRegistry:
         else:
             raise RuntimeError("[registry] Unkown type")
         self.registered[obj] = info
-        return info.name
+        return info
 
     def remove(self, obj) -> bool:
         if obj in self.registered:

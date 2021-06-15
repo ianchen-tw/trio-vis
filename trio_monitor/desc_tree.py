@@ -1,10 +1,11 @@
 import typing
-from typing import Dict, Optional, TypeVar, cast
+from typing import Any, Dict, Optional, TypeVar, Union, cast
 
 from rich.console import Console, ConsoleOptions, RenderResult
 from rich.tree import Tree
 
 from .protocol import TrioNursery, TrioTask
+from .registry import RegisteredSCInfo, SCRegistry
 
 """ Description Tree
 
@@ -22,35 +23,93 @@ TrioNode = TypeVar("TrioNode", TrioNursery, TrioTask)
 
 
 class DescNode:
-    def __init__(self, node: TrioNode):
-        if getattr(node, "name", None) is None:
-            self.name = "unknown"
-        else:
-            self.name = node.name
-
+    def __init__(self, node: TrioNode, registry: SCRegistry):
         self.parent: Optional[DescNode] = None
         self.children: typing.List[DescNode] = []
+        self._registry: SCRegistry = registry
 
         # ref to the actual node
         self.ref: typing.Union[TrioTask, TrioNursery] = node
 
+    @property
+    def info(self) -> RegisteredSCInfo:
+        return self._registry.get_info(self.ref)
+
     def __repr__(self):
-        return f"<DescNode:{self.name}: {self.children}>"
+        return f"<DescNode:{self.info.name}: {self.children}>"
 
     def _rich_node(self, parent: Tree):
-        cur_node = parent.add(f"[yellow] name: {self.name}")
+        cur_node = parent.add(f"[yellow] name: {self.info.name}")
         [n._rich_node(parent=cur_node) for n in self.children]
 
 
 class DescTree:
-    def __init__(self, root):
+    def __init__(self, root, registry: Optional[SCRegistry]):
         self.root: DescNode = root
 
-        self.ref_2node: Dict[TrioNode, DescNode] = {}
-        self.nodes: Dict[str, DescNode] = {}
+        reg: Any = SCRegistry() if registry == None else registry
+        self._registry: SCRegistry = reg
+
+        self.ref_2node: Dict[Union[TrioTask, TrioNursery], DescNode] = {}
+
+        # only used for debugging
+        self._nodes: Dict[str, DescNode] = {}
+
+    @property
+    def registry(self):
+        return self._registry
+
+    def node_by_name(self, name: str) -> Optional[DescNode]:
+        """Get a description node by its name
+        only used for debugging
+        """
+        return self._nodes.get(name, None)
 
     def __repr__(self):
         return f"{self.root}"
+
+    @classmethod
+    def build(
+        cls, root_task: TrioTask, registry: Optional[SCRegistry] = None
+    ) -> "DescTree":
+        """Build a tree of from source"""
+
+        _registry: SCRegistry = SCRegistry() if registry is None else registry
+
+        root_desc = DescNode(root_task, _registry)
+
+        tree = cls(root=root_desc, registry=_registry)
+
+        def register(node: DescNode):
+            name = tree._registry.get_name(node.ref)
+            tree.ref_2node[node.ref] = node
+
+            # only used for debugging
+            tree._nodes[name] = node
+
+        def build_task(task_desc: DescNode):
+            task = cast(TrioTask, task_desc.ref)
+            # build for it's child nurseries
+            for n in task.child_nurseries:
+                child_desc = DescNode(node=n, registry=_registry)
+                child_desc.parent = task_desc
+                task_desc.children.append(child_desc)
+                register(child_desc)
+                build_nursery(child_desc)
+
+        def build_nursery(nursery_desc: DescNode):
+            nursery = cast(TrioNursery, nursery_desc.ref)
+            # build for it's child tasks
+            for t in nursery.child_tasks:
+                child_desc = DescNode(node=t, registry=_registry)
+                child_desc.parent = nursery_desc
+                nursery_desc.children.append(child_desc)
+                register(child_desc)
+                build_task(child_desc)
+
+        register(root_desc)
+        build_task(root_desc)
+        return tree
 
     def __rich_console__(
         self, console: Console, options: ConsoleOptions
@@ -70,7 +129,8 @@ class DescTree:
         return None
 
     def find_parent_nursery_from_trio(self, target: TrioTask) -> Optional[TrioNursery]:
-        """Return the parent nursery of the target task from trio"""
+        """Return the parent nursery of the target task from trio's internal task tree
+        Warning: O(n) time complexity"""
 
         def find_parent_nursery(
             tree_root: TrioTask,
@@ -91,22 +151,25 @@ class DescTree:
         return nursery
 
     def ensure_node_in_tree(self, node: DescNode):
-        if node != self.nodes[node.name]:
+        if node != self._nodes[node.info.name]:
             raise RuntimeError(f"bug: node not exists in tree: {node}")
         if self.ref_2node.get(node.ref, None) is None:
             raise RuntimeError(f"bug: ref not exists in tree: {node.ref}")
 
     def ensure_node_not_in_tree(self, node: DescNode):
-        if node in self.nodes:
+        if node in self._nodes:
             raise RuntimeError(f"bug: node already exists in tree: {node}")
         if self.ref_2node.get(node.ref, None) is not None:
             raise RuntimeError(f"bug: ref already exists in tree: {node.ref}")
 
     def remove_node(self, node: DescNode):
-        """Remove node from tree, also break the link to it's parent"""
+        """Remove node and all of it's children from Desc tree,
+        also break the link to it's parent"""
+
+        print(f"[remove] receive node: {node}")
         self.ensure_node_in_tree(node)
         self.ref_2node.pop(node.ref)
-        self.nodes.pop(node.name)
+        self._nodes.pop(node.info.name)
 
         # unregister all children in the tree
         for child in node.children:
@@ -114,54 +177,23 @@ class DescTree:
 
         if node.parent:
             node.parent.children.remove(node)
-
             # if we remove the only task from parent nursery,
-            # the parent nursery would also be removed
-            # trio only notify us the creation/removement of tasks, but not nurseries
+            # the parent nursery should also be removed automatically
+            # sinc Trio only notify us the creation/removement of tasks, but not nurseries
             if len(node.parent.children) == 0:
                 self.remove_node(node.parent)
             node.parent = None
 
-    def add_node(self, node: DescNode, parent: DescNode):
-        self.ensure_node_in_tree(parent)
-        self.ensure_node_not_in_tree(node)
+        self._registry.remove(node.ref)
 
-        if node in parent.children:
-            raise RuntimeError(f"bug add same child({node}) to parent{parent}")
-        node.parent = parent
-        parent.children.append(node)
+    # def add_node(self, node: DescNode, parent: DescNode):
+    #     self.ensure_node_in_tree(parent)
+    #     self.ensure_node_not_in_tree(node)
 
-        self.ref_2node[node.ref] = node
-        self.nodes[node.name] = node
+    #     if node in parent.children:
+    #         raise RuntimeError(f"bug add same child({node}) to parent{parent}")
+    #     node.parent = parent
+    #     parent.children.append(node)
 
-    @classmethod
-    def build(cls, root_task: TrioTask) -> "DescTree":
-        """Build a tree of from source"""
-        desc_root = DescNode(root_task)
-        tree = cls(root=desc_root)
-
-        def add_cache(node: DescNode):
-            tree.nodes[node.name] = node
-            tree.ref_2node[node.ref] = node
-
-        def build_task(desc_task: DescNode):
-            task = cast(TrioTask, desc_task.ref)
-            for n in task.child_nurseries:
-                desc_n = DescNode(n)
-                desc_n.parent = desc_task
-                desc_task.children.append(desc_n)
-                add_cache(desc_n)
-                build_nursery(desc_n)
-
-        def build_nursery(desc_nursery: DescNode):
-            nursery = cast(TrioNursery, desc_nursery.ref)
-            for t in nursery.child_tasks:
-                desc_t = DescNode(t)
-                desc_t.parent = desc_nursery
-                desc_nursery.children.append(desc_t)
-                add_cache(desc_t)
-                build_task(desc_t)
-
-        add_cache(desc_root)
-        build_task(desc_root)
-        return tree
+    #     self.ref_2node[node.ref] = node
+    #     self.nodes[node.name] = node
