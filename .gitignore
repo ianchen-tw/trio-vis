@@ -1,5 +1,6 @@
 status/
 .vscode
+poetry.lock
 
 # ============
 
