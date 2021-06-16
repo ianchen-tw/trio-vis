@@ -15,7 +15,7 @@ def test_get_parent_nursery(tmpl1):
     tree = DescTree.build(internal_tree)
 
     t2 = internal_tree.nodes["t2"]
-    parent_nursery = tree.get_parent_nursery(t2)
+    parent_nursery = tree.get_parent_ref(t2)
     assert parent_nursery == internal_tree.nodes["n1"]
 
-    assert tree.get_parent_nursery(internal_tree) is None
+    assert tree.get_parent_ref(internal_tree) is None

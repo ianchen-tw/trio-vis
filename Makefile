@@ -13,7 +13,7 @@ better:
 	@poetry run black $(PROJECT)
 	@poetry run autoflake \
 			--remove-all-unused-imports --recursive \
-			--remove-unused-variables --in-plac \
+			--remove-unused-variables --in-place \
 			--exclude=__init__.py \
 			 $(PROJECT)
 	@poetry run isort $(PROJECT)

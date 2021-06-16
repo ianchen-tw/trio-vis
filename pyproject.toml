@@ -15,6 +15,7 @@ python = "^3.8"
 rich = "^9.13.0"
 trio = "^0.18.0"
 trio-typing = "^0.5.0"
+attrs = "^21.2.0"
 
 [tool.poetry.dev-dependencies]
 autoflake = "^1.4"

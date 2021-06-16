@@ -5,6 +5,7 @@ import rich
 from trio_monitor.desc_tree import DescNode, DescTree
 from trio_monitor.protocol import TrioInstrument, TrioNursery, TrioTask
 from trio_monitor.registry import SCRegistry
+from trio_monitor.sc_logger import SCLogger
 
 event_id = 0
 
@@ -44,6 +45,10 @@ def is_user_task(task):
 """
 
 
+def parent_from_registry(target, registry: SCRegistry):
+    pass
+
+
 class SC_Monitor(TrioInstrument):
     """SC Monitor
     Monitoring key structured-concurreny events happend in Trio
@@ -54,10 +59,16 @@ class SC_Monitor(TrioInstrument):
         self.root_task: Optional[TrioTask] = None
         self.desc_tree: Optional[DescTree] = None
         self.root_exited = False
+        self.sc_logger = SCLogger(self.registry)
 
     def _name(self, obj) -> str:
         """Get parsed info from trio's task/nursery"""
         return self.registry.get_info(obj).name
+
+    def rebuild_tree(self):
+        self.desc_tree = DescTree.build(
+            root_task=self.root_task, registry=self.registry
+        )
 
     def task_spawned(self, task):
         # if not is_user_task(task):
@@ -65,41 +76,63 @@ class SC_Monitor(TrioInstrument):
         api_called()
         if not self.root_task:
             self.root_task = task
-            self.desc_tree = DescTree.build(task)
+            self.desc_tree = DescTree.build(task, registry=self.registry)
             log(f"root task added:{self._name(task)}")
+            self.sc_logger.gen_event(desc="start", child=task, parent=None)
             return
-        parent_nursery: TrioNursery = self.desc_tree.find_parent_nursery_from_trio(task)
-        if parent_nursery is None:
-            log("Error!!!")
-            return
-        if len(parent_nursery.child_tasks) == 1:
-            log(f"nursery started: {self._name(parent_nursery)}")
-        log(f"task started: {self._name(task)}, parent:{self._name(parent_nursery)}")
 
         # Rebuild: becuase parent nursery might be added without notify our monitor
         # in that case we might need to detect these changes ourself
         # However, to keep it simple, we simply rebuild the whole tree here
-        self.desc_tree = DescTree.build(self.root_task)
+        self.rebuild_tree()
+        rich.print(self.desc_tree)
+
+        parent_nursery: TrioNursery = self.desc_tree.get_parent_ref(task)
+        if parent_nursery is None:
+            log("Error!!!")
+            return
+
+        if len(parent_nursery.child_tasks) == 1:
+            grand_parent = self.desc_tree.get_parent_ref(parent_nursery)
+            log(f"nursery started: {self._name(parent_nursery)}")
+            self.sc_logger.gen_event(
+                desc="start", child=parent_nursery, parent=grand_parent
+            )
+
+        log(f"task started: {self._name(task)}, parent:{self._name(parent_nursery)}")
+        self.sc_logger.gen_event(desc="start", child=task, parent=parent_nursery)
 
     def task_exited(self, task):
         # we only trace user task
         if self.root_exited:
             return
 
+        api_called()
         task_name = self._name(task)
 
-        api_called()
         desc_task: DescNode = self.desc_tree.ref_2node[task]
         if len(desc_task.children) > 0:
             for desc_child_nursery in desc_task.children:
                 nursery_name = self._name(desc_child_nursery.ref)
                 log(f"nursery exited: {nursery_name}, parent: {task_name}")
+                self.sc_logger.gen_event(
+                    desc="exited", child=desc_child_nursery.ref, parent=task
+                )
+                self.desc_tree.remove_ref(desc_child_nursery.ref)
+
         if task == self.root_task:
             log(f"root task exited: {task_name}")
             self.root_exited = True
+            self.desc_tree.remove_ref(task)
+            self.sc_logger.gen_event(desc="exited", child=task, parent=None)
             return
-        parent_nursery: TrioNursery = self.desc_tree.get_parent_nursery(task)
+
+        parent_nursery: TrioNursery = self.desc_tree.get_parent_ref(task)
         log(f"task exited: {task_name}, parent:{self._name(parent_nursery)}")
+        self.sc_logger.gen_event(desc="exited", child=task, parent=parent_nursery)
+        self.desc_tree.remove_ref(task)
+
         # Bug
         # self.desc_tree.remove_node(desc_task)
-        self.desc_tree = DescTree.build(self.root_task)
+        self.rebuild_tree()
+        rich.print(self.desc_tree)

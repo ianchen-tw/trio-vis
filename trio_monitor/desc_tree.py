@@ -119,36 +119,12 @@ class DescTree:
         self.root._rich_node(parent=root)
         yield root
 
-    def get_parent_nursery(self, task: TrioTask) -> Optional[TrioNursery]:
+    def get_parent_ref(self, target: TrioNode) -> Optional[TrioNode]:
         """Directly retrieve the parent nursery of a task"""
-        node = self.ref_2node.get(task, None)
-        if node is not None:
-            if node.parent is not None:
-                nursery = cast(TrioNursery, node.parent.ref)
-                return nursery
+        node = self.ref_2node.get(target, None)
+        if node is not None and node.parent is not None:
+            return node.parent.ref
         return None
-
-    def find_parent_nursery_from_trio(self, target: TrioTask) -> Optional[TrioNursery]:
-        """Return the parent nursery of the target task from trio's internal task tree
-        Warning: O(n) time complexity"""
-
-        def find_parent_nursery(
-            tree_root: TrioTask,
-            target: TrioTask,
-        ):
-            for n in tree_root.child_nurseries:
-                if target in n.child_tasks:
-                    return n
-                else:
-                    for t in n.child_tasks:
-                        nursery = find_parent_nursery(t, target)
-                        if nursery:
-                            return nursery
-            return None
-
-        # root.ref point to the root of a trio task tree
-        nursery = find_parent_nursery(cast(TrioTask, self.root.ref), target)
-        return nursery
 
     def ensure_node_in_tree(self, node: DescNode):
         if node != self._nodes[node.info.name]:
@@ -161,6 +137,18 @@ class DescTree:
             raise RuntimeError(f"bug: node already exists in tree: {node}")
         if self.ref_2node.get(node.ref, None) is not None:
             raise RuntimeError(f"bug: ref already exists in tree: {node.ref}")
+
+    def remove_ref(self, target: TrioNode):
+        node = self.ref_2node.get(target, None)
+        if len(node.children) > 0:
+            raise RuntimeError("Child remains, cannot remove")
+
+        # remove node from its parent
+        if node.parent:
+            node.parent.children.remove(node)
+            node.parent = None
+        # remove node from registry
+        self._registry.remove(node.ref)
 
     def remove_node(self, node: DescNode):
         """Remove node and all of it's children from Desc tree,
