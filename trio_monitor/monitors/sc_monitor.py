@@ -59,6 +59,8 @@ class SC_Monitor(TrioInstrument):
         self.root_task: Optional[TrioTask] = None
         self.desc_tree: Optional[DescTree] = None
         self.root_exited = False
+
+        # the logger would write the entire file right before the program exit
         self.sc_logger = SCLogger(self.registry)
 
     def _name(self, obj) -> str:
@@ -71,14 +73,14 @@ class SC_Monitor(TrioInstrument):
         )
 
     def task_spawned(self, task):
-        # if not is_user_task(task):
-        #     return
+        if not is_user_task(task):
+            return
         api_called()
         if not self.root_task:
             self.root_task = task
             self.desc_tree = DescTree.build(task, registry=self.registry)
             log(f"root task added:{self._name(task)}")
-            self.sc_logger.gen_event(desc="start", child=task, parent=None)
+            self.sc_logger.log_start(child=task, parent=None)
             return
 
         # Rebuild: becuase parent nursery might be added without notify our monitor
@@ -95,12 +97,10 @@ class SC_Monitor(TrioInstrument):
         if len(parent_nursery.child_tasks) == 1:
             grand_parent = self.desc_tree.get_parent_ref(parent_nursery)
             log(f"nursery started: {self._name(parent_nursery)}")
-            self.sc_logger.gen_event(
-                desc="start", child=parent_nursery, parent=grand_parent
-            )
+            self.sc_logger.log_start(child=parent_nursery, parent=grand_parent)
 
         log(f"task started: {self._name(task)}, parent:{self._name(parent_nursery)}")
-        self.sc_logger.gen_event(desc="start", child=task, parent=parent_nursery)
+        self.sc_logger.log_start(child=task, parent=parent_nursery)
 
     def task_exited(self, task):
         # we only trace user task
@@ -115,21 +115,20 @@ class SC_Monitor(TrioInstrument):
             for desc_child_nursery in desc_task.children:
                 nursery_name = self._name(desc_child_nursery.ref)
                 log(f"nursery exited: {nursery_name}, parent: {task_name}")
-                self.sc_logger.gen_event(
-                    desc="exited", child=desc_child_nursery.ref, parent=task
-                )
+                self.sc_logger.log_exit(child=desc_child_nursery.ref, parent=task)
                 self.desc_tree.remove_ref(desc_child_nursery.ref)
 
         if task == self.root_task:
             log(f"root task exited: {task_name}")
             self.root_exited = True
-            self.desc_tree.remove_ref(task)
-            self.sc_logger.gen_event(desc="exited", child=task, parent=None)
+            self.sc_logger.log_exit(child=task, parent=None)
+            # Notice: we shouldn't remove root task from registry
+            # since we need to retrieve it's name from registry in the logger
             return
 
         parent_nursery: TrioNursery = self.desc_tree.get_parent_ref(task)
         log(f"task exited: {task_name}, parent:{self._name(parent_nursery)}")
-        self.sc_logger.gen_event(desc="exited", child=task, parent=parent_nursery)
+        self.sc_logger.log_exit(child=task, parent=parent_nursery)
         self.desc_tree.remove_ref(task)
 
         # Bug

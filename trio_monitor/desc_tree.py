@@ -1,5 +1,5 @@
 import typing
-from typing import Any, Dict, Optional, TypeVar, Union, cast
+from typing import Any, Dict, Optional, Union, cast
 
 from rich.console import Console, ConsoleOptions, RenderResult
 from rich.tree import Tree
@@ -19,7 +19,7 @@ from .registry import RegisteredSCInfo, SCRegistry
 """
 
 
-TrioNode = TypeVar("TrioNode", TrioNursery, TrioTask)
+TrioNode = Union[TrioNursery, TrioTask]
 
 
 class DescNode:
@@ -140,6 +140,9 @@ class DescTree:
 
     def remove_ref(self, target: TrioNode):
         node = self.ref_2node.get(target, None)
+        if node == None:
+            raise RuntimeError("Bug: remove unexisting ref from registry")
+        node = cast(DescNode, node)
         if len(node.children) > 0:
             raise RuntimeError("Child remains, cannot remove")
 

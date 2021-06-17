@@ -1,6 +1,7 @@
 # Logger for structure-concurrent events
+import atexit
 import json
-from typing import Dict, Optional
+from typing import Dict, List, Optional, cast
 
 import attr
 
@@ -22,19 +23,41 @@ class SCEvent:
 def get_name(target: Optional[TrioNode], registry: SCRegistry) -> str:
     if target == None:
         return "null"
+    target = cast(TrioNode, target)
     return registry.get_info(target).name
 
 
+file_name = "./logs.json"
+
+# TODO: variable log file name
+# TODO: opiton for not writing files
 class SCLogger:
     def __init__(self, registry: SCRegistry):
         self.event_id: int = 0
         self.registry: SCRegistry = registry
+        self.events: List[Dict] = []
+        atexit.register(self._write_log)
 
-    def gen_event(self, desc: str, child: TrioNode, parent: Optional[TrioNode]):
+    def _get_id(self, child, parent):
+        if child is None:
+            raise RuntimeError("target should not be none")
         child_id = get_name(child, self.registry)
         parent_id = get_name(parent, self.registry)
-        event = SCEvent(time=self.time, id=child_id, desc=desc, parent=parent_id)
-        print(json.dumps(event.as_dict()))
+        return (child_id, parent_id)
+
+    def log_start(self, child: TrioNode, parent: Optional[TrioNode]):
+        child_id, parent_id = self._get_id(child, parent)
+        event = SCEvent(time=self.time, id=child_id, desc="created", parent=parent_id)
+        self.events.append(event.as_dict())
+
+    def log_exit(self, child: TrioNode, parent: Optional[TrioNode]):
+        child_id, parent_id = self._get_id(child, parent)
+        event = SCEvent(time=self.time, id=child_id, desc="exited", parent=parent_id)
+        self.events.append(event.as_dict())
+
+    def _write_log(self):
+        with open(file_name, "w") as log_file:
+            json.dump(self.events, log_file, indent=4)
 
     @property
     def time(self) -> int:
