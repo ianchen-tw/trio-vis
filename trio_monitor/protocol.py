@@ -7,8 +7,6 @@ import typing
 class TrioNursery(typing.Protocol):
     """Represent trio's internal `Nursery` type"""
 
-    # a nursery does not have name
-    name: str
     child_tasks: typing.List["TrioTask"]
 
 

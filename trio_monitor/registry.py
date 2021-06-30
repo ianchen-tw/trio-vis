@@ -26,7 +26,7 @@ TYPE_TRIO_NURSERY = 2
 TYPE_UNKOWN = -1
 
 
-def parseObjectType(object):
+def parse_obj_type(object):
     if getattr(object, "child_tasks", None) != None:
         return TYPE_TRIO_NURSERY
     elif getattr(object, "child_nurseries", None) != None:
@@ -37,7 +37,7 @@ def parseObjectType(object):
 # TODO: slotted? freezed?
 @dataclass
 class RegisteredSCInfo:
-    """ Store Information about a scope-like object (Task, Nursery)"""
+    """Store Information about a scope-like object (Task, Nursery)"""
 
     name: str
     serial_num: Optional[int]
@@ -52,7 +52,12 @@ class RegisteredSCInfo:
     def from_nursery(cls, _nursery: TrioNursery, serial_num: SerialNumberGen):
         # TODO: parse from more specific info
         num = serial_num.draw("nursery")
-        name = f"nursery-{num}"
+
+        self_defined_name = getattr(_nursery, "_trio_vis_name", None)
+        if self_defined_name is not None:
+            name = self_defined_name
+        else:
+            name = f"nursery-{num}"
         return cls(name=name, serial_num=num)
 
 
@@ -81,11 +86,11 @@ class SCRegistry:
         if obj in self.registered:
             return self.registered[obj]
 
-        objType = parseObjectType(obj)
+        obj_type = parse_obj_type(obj)
         info: RegisteredSCInfo
-        if objType is TYPE_TRIO_TASK:
+        if obj_type is TYPE_TRIO_TASK:
             info = RegisteredSCInfo.from_task(cast(TrioTask, obj), self.serial_drawer)
-        elif objType is TYPE_TRIO_NURSERY:
+        elif obj_type is TYPE_TRIO_NURSERY:
             info = RegisteredSCInfo.from_nursery(
                 cast(TrioNursery, obj), self.serial_drawer
             )

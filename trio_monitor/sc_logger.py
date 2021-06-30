@@ -27,15 +27,12 @@ def get_name(target: Optional[TrioNode], registry: SCRegistry) -> str:
     return registry.get_info(target).name
 
 
-file_name = "./logs.json"
-
-# TODO: variable log file name
-# TODO: opiton for not writing files
 class SCLogger:
-    def __init__(self, registry: SCRegistry):
+    def __init__(self, registry: SCRegistry, log_filename: str):
         self.event_id: int = 0
         self.registry: SCRegistry = registry
         self.events: List[Dict] = []
+        self.log_filename: str = log_filename
         atexit.register(self._write_log)
 
     def _get_id(self, child, parent):
@@ -56,7 +53,7 @@ class SCLogger:
         self.events.append(event.as_dict())
 
     def _write_log(self):
-        with open(file_name, "w") as log_file:
+        with open(self.log_filename, "w") as log_file:
             json.dump(self.events, log_file, indent=4)
 
     @property

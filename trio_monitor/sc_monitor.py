@@ -54,14 +54,15 @@ class SC_Monitor(TrioInstrument):
     Monitoring key structured-concurreny events happend in Trio
     """
 
-    def __init__(self):
+    def __init__(self, ignore_trio: bool = True, log_filename="./logs.json"):
         self.registry = SCRegistry()
         self.root_task: Optional[TrioTask] = None
         self.desc_tree: Optional[DescTree] = None
         self.root_exited = False
+        self.ignore_trio: bool = ignore_trio
 
         # the logger would write the entire file right before the program exit
-        self.sc_logger = SCLogger(self.registry)
+        self.sc_logger = SCLogger(self.registry, log_filename=log_filename)
 
     def _name(self, obj) -> str:
         """Get parsed info from trio's task/nursery"""
@@ -73,7 +74,7 @@ class SC_Monitor(TrioInstrument):
         )
 
     def task_spawned(self, task):
-        if not is_user_task(task):
+        if self.ignore_trio is True and not is_user_task(task):
             return
         api_called()
         if not self.root_task:

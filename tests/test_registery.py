@@ -23,8 +23,8 @@ def test_drawer(drawer: SerialNumberGen):
 
 
 def test_parser():
-    assert parseObjectType(FakeTrioTask(name="t1")) == TYPE_TRIO_TASK
-    assert parseObjectType(FakeTrioNursery(name="n1")) == TYPE_TRIO_NURSERY
+    assert parse_obj_type(FakeTrioTask(name="t1")) == TYPE_TRIO_TASK
+    assert parse_obj_type(FakeTrioNursery(name="n1")) == TYPE_TRIO_NURSERY
 
 
 def test_registry_add(registry: SCRegistry):

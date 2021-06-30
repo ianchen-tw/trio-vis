@@ -2,6 +2,14 @@ import random
 
 import trio
 
+from trio_monitor import SC_Monitor
+
+
+def main():
+    random.seed(3)
+    trio.run(fetch_resource, instruments=[SC_Monitor(ignore_trio=True)])
+
+
 CONN_SUCCESS_RATE = 0.15
 BASE_DELAY_TIME = 0
 MAX_TIME_TO_NEXT_ISSUE = 1
@@ -72,11 +80,7 @@ async def open_tcp_socket(hostname, port, program_scope, max_wait_time=0.1):
         return winning_socket
 
 
-async def main():
-    pass
-
-    # ipdb.set_trace()
-
+async def fetch_resource():
     async with trio.open_nursery() as nursery:
         nursery.start_soon(
             open_tcp_socket, "dev.to", "https", nursery, MAX_TIME_TO_NEXT_ISSUE
@@ -84,5 +88,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    random.seed(3)
-    trio.run(main)
+    main()

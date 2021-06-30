@@ -18,8 +18,12 @@ class FakeTrioNursery(TrioNursery):
 
     def __init__(self, name: str):
         self.child_tasks: List = []
-        self.name: str = name
+        self._name: str = name
         self._tree_root: Optional["FakeTrioTask"] = None
+
+    @property
+    def _trio_vis_name(self):
+        return self._name
 
     @property
     def tree_root(self):
@@ -29,7 +33,7 @@ class FakeTrioNursery(TrioNursery):
     def tree_root(self, new_root: "FakeTrioTask"):
         if self._tree_root != new_root:
             self._tree_root = new_root
-            self._tree_root.register(self)
+            self._tree_root.register(self, self._name)
             for t in self.child_tasks:
                 t.tree_root = self._tree_root
 
@@ -46,14 +50,14 @@ class FakeTrioNursery(TrioNursery):
 
     def __repr__(self):
         if len(self.child_tasks) > 0:
-            return f"<Nursery({self.name}) {self.child_tasks}>"
-        return f"<Nursery({self.name})>"
+            return f"<Nursery({self._name}) {self.child_tasks}>"
+        return f"<Nursery({self._name})>"
 
     @property
     def rich_tag(self):
         ret = "[bold magenta]Nursery"
-        if self.name is not None:
-            ret += f": [white]{self.name}"
+        if self._name is not None:
+            ret += f": [white]{self._name}"
         return ret
 
     def _rich_node(self, parent: RichTree):
@@ -64,12 +68,15 @@ class FakeTrioNursery(TrioNursery):
 
 class FakeTrioTask(TrioTask):
     """Represent the trio internal type
-    The only usable attribute is `self.child_nurseries`
+    The only usable attributes are `self.child_nurseries` & `name`
     """
 
     def __init__(self, name: str, tree_root: Optional["FakeTrioTask"] = None):
         self.child_nurseries: List = []
         self.name: str = name
+
+        # == Additional feature
+        # FakeTrioTask is able to reference node by it's name without using registry
 
         # Each node would register itself with to root node's dict, so we could referece
         # node by it's name
@@ -79,7 +86,7 @@ class FakeTrioTask(TrioTask):
         ] = {}  # only used by the tree root node
 
         if self.is_root:
-            self.register(self)
+            self.register(self, name=self.name)
 
     @property
     def tree_root(self) -> "FakeTrioTask":
@@ -91,7 +98,7 @@ class FakeTrioTask(TrioTask):
             if self.is_root:
                 self.nodes.clear()
             self._tree_root = new_root
-            self._tree_root.register(self)
+            self._tree_root.register(self, name=self.name)
             for n in self.child_nurseries:
                 n.tree_root = new_root
         else:
@@ -107,12 +114,12 @@ class FakeTrioTask(TrioTask):
             self.child_nurseries.append(nursery)
             nursery.tree_root = self.tree_root
 
-    def register(self, node: Union[FakeTrioNursery, "FakeTrioTask"]):
+    def register(self, node: Union[FakeTrioNursery, "FakeTrioTask"], name: str):
         if not self.is_root:
             raise RuntimeError("Could only call register on a root task")
-        if node.name in self.nodes:
-            raise ValueError(f"Registered name already exists: {node.name}")
-        self.nodes[node.name] = node
+        if name in self.nodes:
+            raise ValueError(f"Registered name already exists: {name}")
+        self.nodes[name] = node
 
     def __repr__(self):
         if len(self.child_nurseries) > 0:
