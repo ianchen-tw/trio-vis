@@ -143,7 +143,7 @@ class FakeTrioTask(TrioTask):
         yield root
 
 
-def gen_tree_from_json(dic: Dict) -> FakeTrioTask:
+def build_tree_from_json(dic: Dict) -> FakeTrioTask:
     """Generate a trio task tree based on dict provided"""
 
     def build_task(task: Dict) -> FakeTrioTask:

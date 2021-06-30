@@ -37,6 +37,8 @@ def parseObjectType(object):
 # TODO: slotted? freezed?
 @dataclass
 class RegisteredSCInfo:
+    """ Store Information about a scope-like object (Task, Nursery)"""
+
     name: str
     serial_num: Optional[int]
 
@@ -74,7 +76,7 @@ class SCRegistry:
 
     def get_info(self, obj: Union[TrioTask, TrioNursery]) -> RegisteredSCInfo:
         """Get object information
-        register it if not yet stored
+        would register if not yet stored
         """
         if obj in self.registered:
             return self.registered[obj]

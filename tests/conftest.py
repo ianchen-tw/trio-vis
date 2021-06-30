@@ -1,11 +1,13 @@
-from typing import Dict
+from typing import cast
 
 import pytest
 
+from trio_monitor.trio_fake import FakeTrioTask, build_tree_from_json
+
 
 @pytest.fixture
-def tmpl1() -> Dict:
-    return {
+def fake_tree() -> FakeTrioTask:
+    tmpl = {
         "name": "t1",
         "nurseries": [
             {
@@ -23,3 +25,4 @@ def tmpl1() -> Dict:
             }
         ],
     }
+    return cast(FakeTrioTask, build_tree_from_json(tmpl))
