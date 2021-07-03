@@ -1,23 +1,25 @@
-import typing
+from typing import List
+
+from typing_extensions import Protocol
 
 """ Use Protocol for better type checking
 """
 
 
-class TrioNursery(typing.Protocol):
+class TrioNursery(Protocol):
     """Represent trio's internal `Nursery` type"""
 
-    child_tasks: typing.List["TrioTask"]
+    child_tasks: List["TrioTask"]
 
 
-class TrioTask(typing.Protocol):
+class TrioTask(Protocol):
     """Represent trio's internal `Task` type"""
 
     name: str
-    child_nurseries: typing.List["TrioNursery"]
+    child_nurseries: List["TrioNursery"]
 
 
-class TrioInstrument(typing.Protocol):
+class TrioInstrument(Protocol):
     """Trio's instrument class to used the instrument API
 
     Refer to:
