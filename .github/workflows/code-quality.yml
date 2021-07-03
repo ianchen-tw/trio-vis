@@ -2,7 +2,7 @@ name: Code Quality
 on: push
 
 jobs:
-  ci:
+  linting:
     strategy:
       fail-fast: false
       matrix:
