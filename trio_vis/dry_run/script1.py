@@ -2,8 +2,8 @@ from contextlib import contextmanager
 
 import rich
 
-from trio_monitor.protocol import TrioInstrument
-from trio_monitor.trio_fake import FakeTrioNursery, FakeTrioTask
+from trio_vis.protocol import TrioInstrument
+from trio_vis.trio_fake import FakeTrioNursery, FakeTrioTask
 
 
 class MyIns(TrioInstrument):

@@ -2,10 +2,10 @@ from typing import Optional
 
 import rich
 
-from trio_monitor.desc_tree import DescNode, DescTree
-from trio_monitor.protocol import TrioInstrument, TrioNursery, TrioTask
-from trio_monitor.registry import SCRegistry
-from trio_monitor.sc_logger import SCLogger
+from trio_vis.desc_tree import DescNode, DescTree
+from trio_vis.protocol import TrioInstrument, TrioNursery, TrioTask
+from trio_vis.registry import SCRegistry
+from trio_vis.sc_logger import SCLogger
 
 event_id = 0
 

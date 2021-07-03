@@ -1,5 +1,5 @@
-from trio_monitor.desc_tree import DescTree
-from trio_monitor.trio_fake import FakeTrioTask
+from trio_vis.desc_tree import DescTree
+from trio_vis.trio_fake import FakeTrioTask
 
 
 def test_build_state_tree(fake_tree: FakeTrioTask):

@@ -1,9 +1,9 @@
 if __name__ == "__main__":
     import rich
 
-    from trio_monitor.dry_run import Script1
-    from trio_monitor.protocol import TrioInstrument
-    from trio_monitor.sc_monitor import SC_Monitor
+    from trio_vis.dry_run import Script1
+    from trio_vis.protocol import TrioInstrument
+    from trio_vis.sc_monitor import SC_Monitor
 
     def start_play(script, instrument: TrioInstrument):
         for _ in script(ins=instrument):

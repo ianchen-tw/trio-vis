@@ -1,8 +1,8 @@
 from unittest.mock import Mock, call
 
-from trio_monitor.sc_monitor import SC_Monitor
-from trio_monitor.trio_fake import (FakeTrioNursery, FakeTrioTask,
-                                    build_tree_from_json)
+from trio_vis.sc_monitor import SC_Monitor
+from trio_vis.trio_fake import (FakeTrioNursery, FakeTrioTask,
+                                build_tree_from_json)
 
 # TODO: add test for node remove
 # TODO: add del task from fask_task_tree

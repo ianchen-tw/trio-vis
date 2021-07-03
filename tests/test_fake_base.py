@@ -1,6 +1,6 @@
 import pytest
 
-from trio_monitor.trio_fake import FakeNode
+from trio_vis.trio_fake import FakeNode
 
 
 @pytest.fixture

@@ -1,7 +1,7 @@
 import rich
 
-from trio_monitor.trio_fake import (FakeTrioNursery, FakeTrioTask,
-                                    build_tree_from_json)
+from trio_vis.trio_fake import (FakeTrioNursery, FakeTrioTask,
+                                build_tree_from_json)
 
 
 def test_build_child_root_tree():

@@ -2,7 +2,7 @@ from typing import cast
 
 import pytest
 
-from trio_monitor.trio_fake import FakeTrioTask, build_tree_from_json
+from trio_vis.trio_fake import FakeTrioTask, build_tree_from_json
 
 
 @pytest.fixture

@@ -1,7 +1,7 @@
 import pytest
 
-from trio_monitor.registry import *
-from trio_monitor.trio_fake import FakeTrioNursery, FakeTrioTask
+from trio_vis.registry import *
+from trio_vis.trio_fake import FakeTrioNursery, FakeTrioTask
 
 
 @pytest.fixture

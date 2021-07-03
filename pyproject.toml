@@ -1,12 +1,12 @@
 [tool.poetry]
 authors = ["Ian Chen <ianre657@gmail.com>"]
-description = "trio monitor"
+description = "Structured Concurrency visualizer for trio"
 license = "MIT"
-name = "trio-monitor"
+name = "trio-vis"
 version = "0.1.0"
 
 [tool.pytest.ini_options]
-addopts = "--cov=trio_monitor"
+addopts = "--cov=trio_vis"
 markers = [
   "dev: marks tests as developing (deselect with '-m \"not dev\"')",
 ]

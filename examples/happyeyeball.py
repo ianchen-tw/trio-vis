@@ -1,8 +1,7 @@
 import random
 
 import trio
-
-from trio_monitor import SC_Monitor
+from trio_sc_vis import SC_Monitor
 
 # reference: Nathaniel J. Smith - Trio: Async concurrency for mere mortals - PyCon 2018
 # https://www.youtube.com/watch?v=oLkfnc_UMcE
