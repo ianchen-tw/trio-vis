@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, cast
 
 from rich.console import Console, ConsoleOptions, RenderResult
 from rich.tree import Tree as RichTree
@@ -10,43 +10,126 @@ Provide a simpler interface for constructing trio task tree & specifying nodes b
 """
 
 
-class FakeTrioNursery(TrioNursery):
-    """Represent the trio internal type.
-
-    The only usable attribute is `self.child_tasks`
-    """
+class FakeNode:
+    """The underlying node for fake objects"""
 
     def __init__(self, name: str):
-        self.child_tasks: List = []
+        self._children: List = []
+        self._parent: Optional["FakeNode"] = None
         self._name: str = name
-        self._tree_root: Optional["FakeTrioTask"] = None
+
+        # FakeTrioTask is able to reference node by it's name without using registry
+
+        # Each node would register itself with to root node's dict, so we could referece
+        # node by it's name
+        self._tree_root: Optional["FakeNode"] = self
+        self._nodes: Dict[str, "FakeNode"] = {}  # only used by the tree root node
+        self.register(self, name=name)
+
+    def __contains__(self, key: Union[str]) -> bool:
+        if type(key) is str:
+            return key in self._nodes
+        else:
+            NotImplementedError
+        return False
+
+    def get_task_node(self, node_name: str) -> "FakeTrioTask":
+        return cast("FakeTrioTask", self._nodes[node_name])
+
+    def get_nursery_node(self, node_name: str) -> "FakeTrioNursery":
+        return cast("FakeTrioNursery", self._nodes[node_name])
 
     @property
-    def _trio_vis_name(self):
-        return self._name
+    def is_root(self) -> bool:
+        return self == self.tree_root
+
+    def tree_add(self, node: "FakeNode", parent_name: str):
+        parent: "FakeNode" = self.tree_root._nodes[parent_name]
+        if node in parent._children:
+            raise RuntimeError(f"Children alreay exists: {node._name}")
+        parent._children.append(node)
+        node._parent = parent
+        # child would register itself to the root node while new root node is assigned
+        node.tree_root = self.tree_root
+
+    def tree_remove(self, node_name: str):
+        node = self.tree_root._nodes[node_name]
+        if node == self.tree_root:
+            raise RuntimeError("Should not remove root from tree")
+        # except the root node, every node must have parent
+        if node._parent is None:
+            raise RuntimeError("Bug: orphan node")
+        parent = node._parent
+        if node not in node._parent._children:
+            raise RuntimeError("Bug: children node not recorded in parent")
+        parent._children.remove(node)
+        node._parent = None
+        # Modify root
+        node.tree_root = node
 
     @property
     def tree_root(self):
         return self._tree_root
 
     @tree_root.setter
-    def tree_root(self, new_root: "FakeTrioTask"):
-        if self._tree_root != new_root:
-            self._tree_root = new_root
-            self._tree_root.register(self, self._name)
-            for t in self.child_tasks:
-                t.tree_root = self._tree_root
+    def tree_root(self, new_root: "FakeNode"):
+        """ side effect: would register itself to the root node"""
+        if new_root is None:
+            raise RuntimeError("Should not assign root to none")
+        if new_root == self._tree_root:
+            return
+
+        # parent management
+        if new_root is self and self._parent is not None:
+            parent = self._parent
+            if self not in parent._children:
+                raise RuntimeError("Bug: children node not recorded in parent")
+            parent._children.remove(self)
+            self._parent = None
+
+        # only used for type checking...
+        assert self._tree_root is not None
+
+        # unregister from old root
+        # clear self from the origianl tree root
+        del self._tree_root._nodes[self._name]
+
+        # register to the new root
+        self._tree_root = new_root
+        self._tree_root.register(node=self, name=self._name)
+
+        # propagate to all of it's children
+        for child in self._children:
+            child.tree_root = self.tree_root
+
+    def register(self, node: "FakeNode", name: str):
+        """ Register a node to this root node"""
+        if not self.is_root:
+            raise RuntimeError("Could only call register on a root task")
+        if name in self._nodes:
+            raise ValueError(f"Registered name already exists: {name}")
+        self._nodes[name] = node
+
+
+class FakeTrioNursery(FakeNode, TrioNursery):
+    """Represent the trio internal type."""
+
+    def __init__(self, name: str):
+        super().__init__(name)
+
+    @property
+    def child_tasks(self):
+        return self._children
+
+    @property
+    def _trio_vis_name(self):
+        return self._name
 
     def _add_task(self, task: "FakeTrioTask"):
-        if task not in self.child_tasks:
-            self.child_tasks.append(task)
-            if self._tree_root:
-                task.tree_root = self.tree_root
+        self.tree_root.tree_add(task, self._name)
 
-    def _remove_task(self, task: "FakeTrioTask"):
-        if task not in self.child_tasks:
-            raise Exception("Remove unexists child task")
-        self.child_tasks.remove(task)
+    def _remove_task(self, task_name: str):
+        self.tree_root.tree_remove(task_name)
 
     def __repr__(self):
         if len(self.child_tasks) > 0:
@@ -66,69 +149,33 @@ class FakeTrioNursery(TrioNursery):
             t._rich_node(parent=cur_node)
 
 
-class FakeTrioTask(TrioTask):
+class FakeTrioTask(FakeNode, TrioTask):
     """Represent the trio internal type
     The only usable attributes are `self.child_nurseries` & `name`
     """
 
-    def __init__(self, name: str, tree_root: Optional["FakeTrioTask"] = None):
-        self.child_nurseries: List = []
-        self.name: str = name
-
-        # == Additional feature
-        # FakeTrioTask is able to reference node by it's name without using registry
-
-        # Each node would register itself with to root node's dict, so we could referece
-        # node by it's name
-        self._tree_root: "FakeTrioTask" = self if tree_root is None else tree_root
-        self.nodes: Dict[
-            str, Union["FakeTrioTask", "FakeTrioNursery"]
-        ] = {}  # only used by the tree root node
-
-        if self.is_root:
-            self.register(self, name=self.name)
+    def __init__(self, name: str):
+        super().__init__(name)
+        print(f"get root-> {super().tree_root}")
 
     @property
-    def tree_root(self) -> "FakeTrioTask":
-        return self._tree_root
+    def name(self):
+        return self._name
 
-    @tree_root.setter
-    def tree_root(self, new_root: Optional["FakeTrioTask"]):
-        if new_root is not None:
-            if self.is_root:
-                self.nodes.clear()
-            self._tree_root = new_root
-            self._tree_root.register(self, name=self.name)
-            for n in self.child_nurseries:
-                n.tree_root = new_root
-        else:
-            # become a new root
-            if not self.is_root:
-                del self._tree_root.nodes[self.name]
-            self._tree_root = self
-            for n in self.child_nurseries:
-                n.tree_root = self
+    @property
+    def child_nurseries(self):
+        return self._children
 
     def _add_nursery(self, nursery: "FakeTrioNursery"):
-        if nursery not in self.child_nurseries:
-            self.child_nurseries.append(nursery)
-            nursery.tree_root = self.tree_root
+        self.tree_root.tree_add(nursery, parent_name=self._name)
 
-    def register(self, node: Union[FakeTrioNursery, "FakeTrioTask"], name: str):
-        if not self.is_root:
-            raise RuntimeError("Could only call register on a root task")
-        if name in self.nodes:
-            raise ValueError(f"Registered name already exists: {name}")
-        self.nodes[name] = node
+    def _remove_nursery(self, nursery_name: str):
+        self.tree_root.tree_remove(nursery_name)
 
     def __repr__(self):
         if len(self.child_nurseries) > 0:
             return f"<Task:{self.name} {self.child_nurseries}>"
         return f"<Task: {self.name}>"
-
-    @property
-    def is_root(self) -> bool:
-        return self == self.tree_root
 
     @property
     def rich_tag(self):

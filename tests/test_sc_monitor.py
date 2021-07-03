@@ -77,7 +77,7 @@ def test_normal_task_spawned_under_nursery():
     )
     logger.clear_cache()
 
-    n1 = task_tree.nodes["n1"]
+    n1 = task_tree.get_nursery_node("n1")
     t3 = FakeTrioTask(name="t3")
     n1._add_task(t3)
 

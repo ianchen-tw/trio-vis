@@ -62,19 +62,19 @@ def Script1(ins: TrioInstrument):
 
     # step4
     with step("remove t3"):
-        n1._remove_task(t3)
+        n1._remove_task(task_name="t3")
         ins.task_exited(t3)
         del t3
 
     # step5
     with step("remove t2"):
-        n1._remove_task(t2)
+        n1._remove_task(task_name="t2")
         ins.task_exited(t2)
         del t2
 
     # step6
     with step("remove t1 and all of it's child"):
-        n0._remove_task(t1)
+        n0._remove_task(task_name="t1")
         ins.task_exited(t1)
         del t1
 

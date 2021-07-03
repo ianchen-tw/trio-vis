@@ -10,9 +10,9 @@ def test_build_state_tree(fake_tree: FakeTrioTask):
 def test_get_parent_nursery(fake_tree: FakeTrioTask):
     tree = DescTree.build(fake_tree)
 
-    t2 = fake_tree.nodes["t2"]
+    t2 = fake_tree.get_task_node("t2")
     parent_nursery = tree.get_parent_ref(t2)
-    assert parent_nursery == fake_tree.nodes["n1"]
+    assert parent_nursery == fake_tree.get_nursery_node("n1")
 
     assert tree.get_parent_ref(fake_tree) is None
 
@@ -20,7 +20,7 @@ def test_get_parent_nursery(fake_tree: FakeTrioTask):
 def test_remove_nursery(fake_tree: FakeTrioTask):
     desc_tree = DescTree.build(fake_tree)
 
-    n1 = fake_tree.nodes["n1"]
+    n1 = fake_tree.get_nursery_node("n1")
     n1_node = desc_tree.ref_2node[n1]
 
     desc_tree.remove_node(n1_node)
@@ -35,7 +35,7 @@ def test_remove_nursery(fake_tree: FakeTrioTask):
 def test_remove_task(fake_tree: FakeTrioTask):
     desc_tree = DescTree.build(fake_tree)
 
-    t2 = fake_tree.nodes["t2"]
+    t2 = fake_tree.get_task_node("t2")
     t2_node = desc_tree.ref_2node[t2]
 
     desc_tree.remove_node(t2_node)
