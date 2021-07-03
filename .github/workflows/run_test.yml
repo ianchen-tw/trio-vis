@@ -8,7 +8,7 @@ jobs:
       matrix:
         python-version: [3.6, 3.7, 3.8, 3.9]
         poetry-version: [1.0, 1.1.6]
-        os: [ubuntu-18.04, macos-latest, windows-latest]
+        os: [ubuntu-18.04]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -20,6 +20,6 @@ jobs:
         with:
           poetry-version: ${{ matrix.poetry-version }}
       - name: install dependencies
-        run: poetry install --dev
+        run: poetry install
       - name: test
         run: pytest
