@@ -4,16 +4,25 @@ import trio
 
 from trio_monitor import SC_Monitor
 
+# reference: Nathaniel J. Smith - Trio: Async concurrency for mere mortals - PyCon 2018
+# https://www.youtube.com/watch?v=oLkfnc_UMcE
+
+CONN_SUCCESS_RATE = 0.15
+BASE_DELAY_TIME = 0
+MAX_TIME_TO_NEXT_ISSUE = 1
+MAX_RETRY = 20
+
 
 def main():
     random.seed(3)
     trio.run(fetch_resource, instruments=[SC_Monitor(ignore_trio=True)])
 
 
-CONN_SUCCESS_RATE = 0.15
-BASE_DELAY_TIME = 0
-MAX_TIME_TO_NEXT_ISSUE = 1
-MAX_RETRY = 20
+async def fetch_resource():
+    async with trio.open_nursery() as nursery:
+        nursery.start_soon(
+            open_tcp_socket, "dev.to", "https", nursery, MAX_TIME_TO_NEXT_ISSUE
+        )
 
 
 async def fake_connect(success_rate):
@@ -78,13 +87,6 @@ async def open_tcp_socket(hostname, port, program_scope, max_wait_time=0.1):
     else:
         program_scope.cancel_scope.cancel()
         return winning_socket
-
-
-async def fetch_resource():
-    async with trio.open_nursery() as nursery:
-        nursery.start_soon(
-            open_tcp_socket, "dev.to", "https", nursery, MAX_TIME_TO_NEXT_ISSUE
-        )
 
 
 if __name__ == "__main__":
