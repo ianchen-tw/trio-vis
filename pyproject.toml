@@ -1,9 +1,27 @@
 [tool.poetry]
 authors = ["Ian Chen <ianre657@gmail.com>"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Environment :: Plugins",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Framework :: Trio",
+  "Topic :: Scientific/Engineering :: Visualization",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.6",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3 :: Only",
+]
 description = "Structured Concurrency visualizer for trio"
+homepage = "https://github.com/ianchen-tw/trio-vis"
 license = "MIT"
 name = "trio-vis"
-version = "0.1.0"
+readme = "README.md"
+repository = "https://github.com/ianchen-tw/trio-vis"
+version = "0.0.1"
 
 [tool.pytest.ini_options]
 addopts = "--cov=trio_vis"
