@@ -7,7 +7,7 @@ def test_build_state_tree(fake_tree: FakeTrioTask):
     print(desc_tree)
 
 
-def test_get_parent_nursery(fake_tree: FakeTrioTask):
+def test_get_parent_nursery(fake_tree: DescTree):
     tree = DescTree.build(fake_tree)
 
     t2 = fake_tree.get_task_node("t2")
