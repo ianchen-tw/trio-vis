@@ -13,7 +13,7 @@ markers = [
 
 [tool.poetry.dependencies]
 attrs = "^21.2.0"
-python = "^3.6"
+python = "^3.5"
 rich = "^9.13.0"
 trio = "^0.18.0"
 trio-typing = "^0.5.0"
