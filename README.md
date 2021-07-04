@@ -58,11 +58,13 @@ Developers could easily conceptualize their program, and bring their developing 
 
 + [python-trio/trio-monitor]: officail project developed under trio, however it use the old InstruementAPI
 + [syncrypt/trio-inspector]: is a webmonitor to visualize the current state of the program
-+ [Tronic/trio-web-monitor] a experiment to unified all previous work, developed by [Tronic](https://github.com/Tronic)
++ [Tronic/trio-web-monitor]: a experiment to unified all previous work, developed by [Tronic](https://github.com/Tronic)
++ [oremanj/trio-monitor]
 
 [python-trio/trio-monitor]:https://github.com/python-trio/trio-monitor
 [Tronic/trio-web-monitor]:https://github.com/Tronic/trio-web-monitor
 [syncrypt/trio-inspector]:https://github.com/syncrypt/trio-inspector
+[oremanj/trio-monitor]:https://github.com/oremanj/trio-monitor
 
 ## Future plan
 
