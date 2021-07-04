@@ -68,7 +68,7 @@ class SC_Monitor(TrioInstrument):
     def from_tree(cls, root_task: TrioTask, *args, **kwargs):
         """Build the Monitor with a given state, used for testing"""
         instance = cls(*args, **kwargs)
-        instance.cfg.ignore_trio = False
+        instance.cfg.only_vis_user_scope = False
         instance.root_task = root_task
         instance.rebuild_tree()
         return instance
@@ -83,7 +83,7 @@ class SC_Monitor(TrioInstrument):
         )
 
     def task_spawned(self, task):
-        if self.cfg.ignore_trio is True and not is_user_task(task):
+        if self.cfg.only_vis_user_scope is True and not is_user_task(task):
             return
         self.api_called()
         if not self.root_task:

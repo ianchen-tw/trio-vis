@@ -23,7 +23,7 @@ class fake_logger:
 def test_root_spawned():
     logger = fake_logger()
     sc_mon = SC_Monitor(
-        cfg=VisConfig(ignore_trio=False), sc_logger=Mock(return_value=logger)
+        cfg=VisConfig(only_vis_user_scope=False), sc_logger=Mock(return_value=logger)
     )
 
     t0 = FakeTrioTask(name="t0")

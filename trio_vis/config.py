@@ -18,8 +18,13 @@ else:
 @static_check_init_args
 class VisConfig(BaseModel):
 
-    ignore_trio: bool = True
+    # Ignore trio's internal nursery/task
+    # the side effect is that we would inspect every task/nersery's code object
+    # so we would like to disable this config while testing
+    only_vis_user_scope: bool = True
+
     print_task_tree: bool = True
+
     log_overwrite_if_exists: bool = True
     log_filename: str = "./logs.json"
 

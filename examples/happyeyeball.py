@@ -4,7 +4,7 @@ import trio
 
 from trio_vis import SC_Monitor, VisConfig
 
-# reference: Nathaniel J. Smith - Trio: Async concurrency for mere mortals - PyCon 2018
+# ref: Nathaniel J. Smith - Trio: Async concurrency for mere mortals - PyCon 2018
 # https://www.youtube.com/watch?v=oLkfnc_UMcE
 
 CONN_SUCCESS_RATE = 0.15
@@ -15,7 +15,7 @@ MAX_RETRY = 20
 
 def main():
     random.seed(3)
-    cfg = VisConfig(print_task_tree=False)
+    cfg = VisConfig(print_task_tree=True)
     trio.run(fetch_resource, instruments=[SC_Monitor(cfg=cfg)])
 
 
