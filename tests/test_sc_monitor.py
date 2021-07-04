@@ -1,5 +1,6 @@
 from unittest.mock import Mock, call
 
+from trio_vis.config import VisConfig
 from trio_vis.sc_monitor import SC_Monitor
 from trio_vis.trio_fake import (FakeTrioNursery, FakeTrioTask,
                                 build_tree_from_json)
@@ -21,7 +22,9 @@ class fake_logger:
 
 def test_root_spawned():
     logger = fake_logger()
-    sc_mon = SC_Monitor(ignore_trio=False, sc_logger=Mock(return_value=logger))
+    sc_mon = SC_Monitor(
+        cfg=VisConfig(ignore_trio=False), sc_logger=Mock(return_value=logger)
+    )
 
     t0 = FakeTrioTask(name="t0")
     sc_mon.task_spawned(t0)
@@ -37,7 +40,6 @@ def test_first_task_spawned_under_nursery():
     task_tree = build_tree_from_json(start_state)
     sc_mon = SC_Monitor.from_tree(
         root_task=task_tree,
-        ignore_trio=False,
         sc_logger=Mock(return_value=logger),
     )
     logger.clear_cache()
@@ -72,7 +74,6 @@ def test_normal_task_spawned_under_nursery():
     task_tree = build_tree_from_json(start_state)
     sc_mon = SC_Monitor.from_tree(
         root_task=task_tree,
-        ignore_trio=False,
         sc_logger=Mock(return_value=logger),
     )
     logger.clear_cache()

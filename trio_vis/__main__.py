@@ -11,4 +11,4 @@ if __name__ == "__main__":
 
     rich.print("[bold red] start running with fake data")
 
-    start_play(Script1, SC_Monitor(ignore_trio=False))
+    start_play(Script1, SC_Monitor())

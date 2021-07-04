@@ -1,12 +1,24 @@
 # Logger for structure-concurrent events
 import atexit
 import json
+from abc import abstractmethod
 from typing import Dict, List, Optional, cast
 
 import attr
+from typing_extensions import Protocol
 
 from .desc_tree import TrioNode
 from .registry import SCRegistry
+
+
+class Logger(Protocol):
+    @abstractmethod
+    def log_start(self, child: TrioNode, parent: Optional[TrioNode]):
+        raise NotImplementedError
+
+    @abstractmethod
+    def log_exit(self, child: TrioNode, parent: Optional[TrioNode]):
+        raise NotImplementedError
 
 
 @attr.s(auto_attribs=True, slots=True, frozen=True)
@@ -27,7 +39,7 @@ def get_name(target: Optional[TrioNode], registry: SCRegistry) -> str:
     return registry.get_info(target).name
 
 
-class SCLogger:
+class SCLogger(Logger):
     def __init__(self, registry: SCRegistry, log_filename: str):
         self.event_id: int = 0
         self.registry: SCRegistry = registry

@@ -1,7 +1,8 @@
 import random
 
 import trio
-from trio_sc_vis import SC_Monitor
+
+from trio_vis import SC_Monitor, VisConfig
 
 # reference: Nathaniel J. Smith - Trio: Async concurrency for mere mortals - PyCon 2018
 # https://www.youtube.com/watch?v=oLkfnc_UMcE
@@ -14,14 +15,13 @@ MAX_RETRY = 20
 
 def main():
     random.seed(3)
-    trio.run(fetch_resource, instruments=[SC_Monitor(ignore_trio=True)])
+    cfg = VisConfig(print_task_tree=False)
+    trio.run(fetch_resource, instruments=[SC_Monitor(cfg=cfg)])
 
 
 async def fetch_resource():
     async with trio.open_nursery() as nursery:
-        nursery.start_soon(
-            open_tcp_socket, "dev.to", "https", nursery, MAX_TIME_TO_NEXT_ISSUE
-        )
+        nursery.start_soon(open_tcp_socket, nursery, MAX_TIME_TO_NEXT_ISSUE)
 
 
 async def fake_connect(success_rate):
@@ -33,9 +33,7 @@ async def fake_connect(success_rate):
         raise OSError("Nooop")
 
 
-async def open_tcp_socket(hostname, port, program_scope, max_wait_time=0.1):
-    #     targets = await trio.socket.getaddrinfo(
-    #         hostname, port, type=trio.socket.SOCK_STREAM)
+async def open_tcp_socket(program_scope, max_wait_time=0.1):
     targets = [i for i in range(MAX_RETRY)]
     failed_attempts = [trio.Event() for _ in targets]
     winning_socket = None
@@ -59,10 +57,7 @@ async def open_tcp_socket(hostname, port, program_scope, max_wait_time=0.1):
 
         # try to connect to our target
         try:
-            #             *socket_config, _, target = targets[target_idx]
             log("try to connect")
-            #             socket = trio.socket.socket(*socket_config)
-            #             await socket.connect(target)
             await fake_connect(CONN_SUCCESS_RATE)
         # if fails, tell next attenpt to go ahead
         except OSError:

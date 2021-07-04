@@ -2,27 +2,11 @@ from typing import Optional
 
 import rich
 
+from trio_vis.config import VisConfig
 from trio_vis.desc_tree import DescNode, DescTree
 from trio_vis.protocol import TrioInstrument, TrioNursery, TrioTask
 from trio_vis.registry import SCRegistry
-from trio_vis.sc_logger import SCLogger
-
-event_id = 0
-
-
-def log(msg):
-    global event_id
-    event_id += 1
-    rich.print(f"[red]event-{event_id}[reset] - [blue]{msg}")
-
-
-called_id = 0
-
-
-def api_called():
-    global called_id
-    rich.print(f"[yellow]api called-{called_id}[reset]")
-    called_id += 1
+from trio_vis.sc_logger import Logger, SCLogger
 
 
 def is_user_task(task):
@@ -54,22 +38,37 @@ class SC_Monitor(TrioInstrument):
     Monitoring key structured-concurreny events happend in Trio
     """
 
-    def __init__(
-        self, ignore_trio: bool = True, sc_logger=SCLogger, log_filename="./logs.json"
-    ):
+    def __init__(self, cfg: VisConfig = VisConfig(), sc_logger=SCLogger):
         self.registry = SCRegistry()
         self.root_task: Optional[TrioTask] = None
         self.desc_tree: Optional[DescTree] = None
         self.root_exited = False
-        self.ignore_trio: bool = ignore_trio
+
+        self.cfg: VisConfig = cfg
+
+        self.event_id: int = 0
+        self.called_id: int = 0
 
         # the logger would write the entire file right before the program exit
-        self.sc_logger = sc_logger(self.registry, log_filename=log_filename)
+        self.sc_logger: Logger = sc_logger(
+            self.registry, log_filename=self.cfg.log_filename
+        )
+
+    def log(self, msg):
+        self.event_id += 1
+        if self.cfg.print_task_tree is True:
+            rich.print(f"[red]event-{self.event_id}[reset] - [blue]{msg}")
+
+    def api_called(self):
+        if self.cfg.print_task_tree is True:
+            rich.print(f"[yellow]api called-{self.called_id}[reset]")
+        self.called_id += 1
 
     @classmethod
     def from_tree(cls, root_task: TrioTask, *args, **kwargs):
-        """Build the Monitor with a given state, useful for testing"""
+        """Build the Monitor with a given state, used for testing"""
         instance = cls(*args, **kwargs)
+        instance.cfg.ignore_trio = False
         instance.root_task = root_task
         instance.rebuild_tree()
         return instance
@@ -84,13 +83,13 @@ class SC_Monitor(TrioInstrument):
         )
 
     def task_spawned(self, task):
-        if self.ignore_trio is True and not is_user_task(task):
+        if self.cfg.ignore_trio is True and not is_user_task(task):
             return
-        api_called()
+        self.api_called()
         if not self.root_task:
             self.root_task = task
             self.desc_tree = DescTree.build(task, registry=self.registry)
-            log(f"root task added:{self._name(task)}")
+            self.log(f"root task added:{self._name(task)}")
             self.sc_logger.log_start(child=task, parent=None)
             return
 
@@ -98,19 +97,22 @@ class SC_Monitor(TrioInstrument):
         # in that case we might need to detect these changes ourself
         # However, to keep it simple, we simply rebuild the whole tree here
         self.rebuild_tree()
-        rich.print(self.desc_tree)
+        if self.cfg.print_task_tree:
+            rich.print(self.desc_tree)
 
         parent_nursery: TrioNursery = self.desc_tree.get_parent_ref(task)
         if parent_nursery is None:
-            log("Error!!!")
+            self.log("Error!!!")
             return
 
         if len(parent_nursery.child_tasks) == 1:
             grand_parent = self.desc_tree.get_parent_ref(parent_nursery)
-            log(f"nursery started: {self._name(parent_nursery)}")
+            self.log(f"nursery started: {self._name(parent_nursery)}")
             self.sc_logger.log_start(child=parent_nursery, parent=grand_parent)
 
-        log(f"task started: {self._name(task)}, parent:{self._name(parent_nursery)}")
+        self.log(
+            f"task started: {self._name(task)}, parent:{self._name(parent_nursery)}"
+        )
         self.sc_logger.log_start(child=task, parent=parent_nursery)
 
     def task_exited(self, task):
@@ -118,19 +120,19 @@ class SC_Monitor(TrioInstrument):
         if self.root_exited:
             return
 
-        api_called()
+        self.api_called()
         task_name = self._name(task)
 
         desc_task: DescNode = self.desc_tree.ref_2node[task]
         if len(desc_task.children) > 0:
             for desc_child_nursery in desc_task.children:
                 nursery_name = self._name(desc_child_nursery.ref)
-                log(f"nursery exited: {nursery_name}, parent: {task_name}")
+                self.log(f"nursery exited: {nursery_name}, parent: {task_name}")
                 self.sc_logger.log_exit(child=desc_child_nursery.ref, parent=task)
                 self.desc_tree.remove_ref(desc_child_nursery.ref)
 
         if task == self.root_task:
-            log(f"root task exited: {task_name}")
+            self.log(f"root task exited: {task_name}")
             self.root_exited = True
             self.sc_logger.log_exit(child=task, parent=None)
             # Notice: we shouldn't remove root task from registry
@@ -138,11 +140,10 @@ class SC_Monitor(TrioInstrument):
             return
 
         parent_nursery: TrioNursery = self.desc_tree.get_parent_ref(task)
-        log(f"task exited: {task_name}, parent:{self._name(parent_nursery)}")
+        self.log(f"task exited: {task_name}, parent:{self._name(parent_nursery)}")
         self.sc_logger.log_exit(child=task, parent=parent_nursery)
         self.desc_tree.remove_ref(task)
 
-        # Bug
-        # self.desc_tree.remove_node(desc_task)
         self.rebuild_tree()
-        rich.print(self.desc_tree)
+        if self.cfg.print_task_tree:
+            rich.print(self.desc_tree)
