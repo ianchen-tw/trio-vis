@@ -12,10 +12,8 @@ from .registry import RegisteredSCInfo, SCRegistry
     We trace the current system state by keeping our own task tree
 
     This tree must support:
-    1. Build up a state tree based on the trio node given
+    1. Build up a state tree based on a TrioTask
     2. Given a task, find it's parent
-    3. Given another tree, find the first node which is different
-    4. Operations for adding/removing a single node to/from tree
 """
 
 
@@ -176,15 +174,3 @@ class DescTree:
             node.parent = None
 
         self._registry.remove(node.ref)
-
-    # def add_node(self, node: DescNode, parent: DescNode):
-    #     self.ensure_node_in_tree(parent)
-    #     self.ensure_node_not_in_tree(node)
-
-    #     if node in parent.children:
-    #         raise RuntimeError(f"bug add same child({node}) to parent{parent}")
-    #     node.parent = parent
-    #     parent.children.append(node)
-
-    #     self.ref_2node[node.ref] = node
-    #     self.nodes[node.name] = node

@@ -16,7 +16,7 @@ MAX_RETRY = 20
 def main():
     random.seed(3)
     cfg = VisConfig(print_task_tree=True)
-    trio.run(fetch_resource, instruments=[SC_Monitor(cfg=cfg)])
+    trio.run(fetch_resource, instruments=[SC_Monitor(config=cfg)])
 
 
 async def fetch_resource():

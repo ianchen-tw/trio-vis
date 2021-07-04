@@ -24,8 +24,8 @@ def is_user_task(task):
     3. Task spawnd under a nursery
 + -- task exited
     4. Task exited but it's parent nursery still exists
-    5. Task exited with ended it's child nursery
-    6. child root exited
+    5. Task exited with it's child nursery ended
+    6. root task exited
 """
 
 
@@ -38,13 +38,13 @@ class SC_Monitor(TrioInstrument):
     Monitoring key structured-concurreny events happend in Trio
     """
 
-    def __init__(self, cfg: VisConfig = VisConfig(), sc_logger=SCLogger):
+    def __init__(self, config: VisConfig = VisConfig(), sc_logger=SCLogger):
         self.registry = SCRegistry()
         self.root_task: Optional[TrioTask] = None
         self.desc_tree: Optional[DescTree] = None
         self.root_exited = False
 
-        self.cfg: VisConfig = cfg
+        self.cfg: VisConfig = config
 
         self.event_id: int = 0
         self.called_id: int = 0

@@ -1,12 +1,12 @@
 # trio-vis
 
-trio-vis is a plugin for visualizing your project Trio's scope history.
+`trio-vis` is a plugin for visualizing the scope history of your Trio project.
 
 ![showcase](res/showcase.png)
 
 ## How to use
 
-[sc-vis]: sc-vis.ianchen.github.com
+[sc-vis]: sc-vis.ianchen-tw.github.com
 
 1. Install `trio-vis` via `pip install trio-vis`
 2. In your source code, register `SC_Monitor()` as an Instrument while running `trio`
@@ -16,9 +16,19 @@ trio-vis is a plugin for visualizing your project Trio's scope history.
     trio.run(my_main_funciton, instruments=[SC_Monitor()])
     ```
 
-3. After your program finished(or exited), the scope history would be stored in `./logs.json`
-4. Upload your log file to [sc-visualiver][sc-vis], this is a twin project which focus on visualization work.
-5. See your visuailzation result and help us improve.
+3. After your program finished(or exited), the scope history would be stored in `./sc-logs.json`
+4. Upload your log file to [sc-visualiver][sc-vis], this is a twin project which focuses on visualization work.
+5. See your visualization result and help us improve.
+
+## Configuration
+
+Import `VisConfig` from `trio_vis`, and provide it as an argument while making your `SC_Monitor` object.
+
+```python
+from trio_vis import SC_Monitor, VisConfig
+cfg = VisConfig(print_task_tree=True)
+trio.run(my_main_funciton, instruments=[SC_Monitor(config=cfg)])
+```
 
 ## What does it do
 
@@ -35,14 +45,14 @@ Since the [Instrument API][ins-api] doesn't provide callbacks for `Nursery`, we 
 [curio]: https://github.com/dabeaz/curio
 [curio-monitor]: https://github.com/dabeaz/curio/blob/master/curio/monitor.py
 
-Derived from [curio], [trio] combine the idea of Strucutured Concurrency with existing single-threaded event-driven architecture. Which does make concurent progams more managable.
+Derived from [curio], [trio] combines the idea of Structured Concurrency with existing single-threaded event-driven architecture. Which does make concurrent programs more manageable.
 
-To make trio comparable with curio, contributors of trio also want to mimic the feature of [curio-monitor] in order to monitor the current system running state. This idea could be trace back to [trio-issue-413].
+To make trio comparable with curio, contributors of trio also want to mimic the feature of [curio-monitor] to monitor the current system running state. This idea could be traced back to [trio-issue-413].
 
-Since then, projects have been developed (showen below).
+Since then, projects have been developed (shown below).
 
-However, **trio is not curio**, at least lifetimes of scopes are strucutred by nature. I argue that by utilizing the feature of Structured Concurrency, we could visualize programs better.
-Developer could easily conceptualize their program, and bring their developing experience to the next level.
+However, **trio is not curio**, at least lifetimes of scopes are structured by nature. I argue that by utilizing the feature of Structured Concurrency, we could visualize programs better.
+Developers could easily conceptualize their program, and bring their developing experience to the next level.
 
 ### Previous work
 

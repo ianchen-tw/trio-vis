@@ -26,7 +26,7 @@ class VisConfig(BaseModel):
     print_task_tree: bool = True
 
     log_overwrite_if_exists: bool = True
-    log_filename: str = "./logs.json"
+    log_filename: str = "./sc-logs.json"
 
     @validator("log_filename")
     def log_file_should_not_be_overwritten_unless_required(cls, filename: str, values):
