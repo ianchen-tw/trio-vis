@@ -6,9 +6,10 @@
 
 ## How to use
 
-[sc-vis]: sc-vis.ianchen-tw.github.com
+[sc-vis]: https://ianchen-tw.github.io/sc-vis
+[trio-vis-pip]: https://pypi.org/project/trio-vis/
 
-1. Install `trio-vis` via `pip install trio-vis`
+1. Install `trio-vis` via `pip install trio-vis` ([trio-vis-pip])
 2. In your source code, register `SC_Monitor()` as an Instrument while running `trio`
 
     ```python
