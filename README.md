@@ -18,7 +18,7 @@
     ```
 
 3. After your program finished(or exited), the scope history would be stored in `./sc-logs.json`
-4. Upload your log file to [sc-visualiver][sc-vis], this is a twin project which focuses on visualization work.
+4. Upload your log file to [sc-visualizer][sc-vis], this is a twin project which focuses on visualization work.
 5. See your visualization result and help us improve.
 
 ## Configuration
