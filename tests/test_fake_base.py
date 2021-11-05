@@ -5,7 +5,7 @@ from trio_vis.trio_fake import FakeNode
 
 @pytest.fixture
 def tree_line() -> FakeNode:
-    """ n0 -> n1 -> n2 """
+    """n0 -> n1 -> n2"""
     n0 = FakeNode(name="n0")
     n1 = FakeNode(name="n1")
     n2 = FakeNode(name="n2")
