@@ -8,7 +8,7 @@ import attr
 from typing_extensions import Protocol
 
 from .desc_tree import TrioNode
-from .registry import SCRegistry
+from .registry import RegisteredSCInfo, SCRegistry
 
 
 class Logger(Protocol):
@@ -25,18 +25,27 @@ class Logger(Protocol):
 class SCEvent:
     time: int
     desc: str
-    id: str
+    name: str
+    type: str
     parent: str
 
     def as_dict(self) -> Dict:
         return attr.asdict(self)
 
 
-def get_name(target: Optional[TrioNode], registry: SCRegistry) -> str:
+def get_info(
+    target: Optional[TrioNode], registry: SCRegistry
+) -> Optional[RegisteredSCInfo]:
     if target == None:
-        return "null"
+        return None
     target = cast(TrioNode, target)
-    return registry.get_info(target).name
+    return registry.get_info(target)
+
+
+def scope_name(task_info: RegisteredSCInfo):
+    if task_info.type != "task":
+        raise RuntimeError("Can only call this method with task object")
+    return f"{task_info.name}__TRIO_VIS_Tscope"
 
 
 class SCLogger(Logger):
@@ -47,22 +56,145 @@ class SCLogger(Logger):
         self.log_filename: str = log_filename
         atexit.register(self._write_log)
 
-    def _get_id(self, child, parent):
+    def _get_info(self, child, parent):
         if child is None:
             raise RuntimeError("target should not be none")
-        child_id = get_name(child, self.registry)
-        parent_id = get_name(parent, self.registry)
-        return (child_id, parent_id)
+        child_info = get_info(child, self.registry)
+        parent_info = get_info(parent, self.registry)
+        return (child_info, parent_info)
 
     def log_start(self, child: TrioNode, parent: Optional[TrioNode]):
-        child_id, parent_id = self._get_id(child, parent)
-        event = SCEvent(time=self.time, id=child_id, desc="created", parent=parent_id)
-        self.events.append(event.as_dict())
+        child_info, parent_info = self._get_info(child, parent)
+        if parent_info is None:
+            # Root Scope
+            self.events.append(
+                SCEvent(
+                    time=self.time,
+                    name=scope_name(child_info),
+                    desc="created",
+                    parent="null",
+                    type="scope",
+                ).as_dict()
+            )
+            # Root task
+            self.events.append(
+                SCEvent(
+                    time=self.time,
+                    name=child_info.name,
+                    desc="created",
+                    parent=scope_name(child_info),
+                    type="task",
+                ).as_dict()
+            )
+
+            # print(f"Create root scope: {scope_name(child_info)}")
+            # print(
+            #     f"Create root task: {child_info.name} under scope:{scope_name(child_info)}"
+            # )
+        elif child_info.type == "task" and parent_info.type == "nursery":
+            # Scope for child task
+            self.events.append(
+                SCEvent(
+                    type="scope",
+                    time=self.time,
+                    name=scope_name(child_info),
+                    desc="created",
+                    parent=parent_info.name,
+                ).as_dict()
+            )
+            # Child task
+            self.events.append(
+                SCEvent(
+                    type="task",
+                    time=self.time,
+                    name=child_info.name,
+                    desc="created",
+                    parent=scope_name(child_info),
+                ).as_dict()
+            )
+            # print(
+            #     f"Create scope: {scope_name(child_info)} under scope:{parent_info.name}"
+            # )
+            # print(
+            #     f"Create task: {child_info.name} under scope:{scope_name(child_info)}"
+            # )
+        elif child_info.type == "nursery" and parent_info.type == "task":
+            self.events.append(
+                SCEvent(
+                    type="scope",
+                    time=self.time,
+                    name=child_info.name,
+                    desc="created",
+                    parent=scope_name(parent_info),
+                ).as_dict()
+            )
+            # print(
+            #     f"Create scope: {child_info.name} under scope: {scope_name(parent_info)}"
+            # )
+        else:
+            print("spawn unknown")
 
     def log_exit(self, child: TrioNode, parent: Optional[TrioNode]):
-        child_id, parent_id = self._get_id(child, parent)
-        event = SCEvent(time=self.time, id=child_id, desc="exited", parent=parent_id)
-        self.events.append(event.as_dict())
+        child_info, parent_info = self._get_info(child, parent)
+        if parent_info is None:
+            # root exit
+            # print(f"Exit task: {child_info.name} under scope:{scope_name(child_info)}")
+            # print(f"Exit scope: {scope_name(child_info)}")
+            # Root task
+            self.events.append(
+                SCEvent(
+                    time=self.time,
+                    name=child_info.name,
+                    desc="exited",
+                    parent=scope_name(child_info),
+                    type="task",
+                ).as_dict()
+            )
+            # Root scope
+            self.events.append(
+                SCEvent(
+                    time=self.time,
+                    name=scope_name(child_info),
+                    desc="exited",
+                    parent="null",
+                    type="task",
+                ).as_dict()
+            )
+        elif child_info.type == "task" and parent_info.type == "nursery":
+            # print(f"Exit task:{child_info.name} under scope:{scope_name(child_info)}")
+            # print(f"Exit scope:{scope_name(child_info)} under scope:{parent_info.name}")
+            self.events.append(
+                SCEvent(
+                    time=self.time,
+                    name=child_info.name,
+                    desc="exited",
+                    parent=scope_name(child_info),
+                    type="task",
+                ).as_dict()
+            )
+            self.events.append(
+                SCEvent(
+                    time=self.time,
+                    name=scope_name(child_info),
+                    desc="exited",
+                    parent=parent_info.name,
+                    type="scope",
+                ).as_dict()
+            )
+
+        elif child_info.type == "nursery" and parent_info.type == "task":
+            # print(f"Exit scope:{child_info.name} under scope:{scope_name(parent_info)}")
+            self.events.append(
+                SCEvent(
+                    time=self.time,
+                    name=child_info.name,
+                    desc="exited",
+                    parent=scope_name(parent_info),
+                    type="scope",
+                ).as_dict()
+            )
+        else:
+            print("exit unknown")
 
     def _write_log(self):
         with open(self.log_filename, "w") as log_file:

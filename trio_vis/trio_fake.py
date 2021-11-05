@@ -73,7 +73,7 @@ class FakeNode:
 
     @tree_root.setter
     def tree_root(self, new_root: "FakeNode"):
-        """ side effect: would register itself to the root node"""
+        """side effect: would register itself to the root node"""
         if new_root is None:
             raise RuntimeError("Should not assign root to none")
         if new_root == self._tree_root:
@@ -103,7 +103,7 @@ class FakeNode:
             child.tree_root = self.tree_root
 
     def register(self, node: "FakeNode", name: str):
-        """ Register a node to this root node"""
+        """Register a node to this root node"""
         if not self.is_root:
             raise RuntimeError("Could only call register on a root task")
         if name in self._nodes:

@@ -1,6 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Union, cast
+from typing import Any, Dict, Literal, Optional, Union, cast
 
 from .protocol import TrioNursery, TrioTask
 
@@ -41,12 +41,13 @@ class RegisteredSCInfo:
 
     name: str
     serial_num: Optional[int]
+    type: Literal["nursery", "task"]
 
     @classmethod
     def from_task(cls, task: TrioTask, serial_num: SerialNumberGen):
         num = serial_num.draw(task.name)
         name = f"{task.name}-{num}"
-        return cls(name=name, serial_num=num)
+        return cls(name=name, serial_num=num, type="task")
 
     @classmethod
     def from_nursery(cls, _nursery: TrioNursery, serial_num: SerialNumberGen):
@@ -58,7 +59,7 @@ class RegisteredSCInfo:
             name = self_defined_name
         else:
             name = f"nursery-{num}"
-        return cls(name=name, serial_num=num)
+        return cls(name=name, serial_num=num, type="nursery")
 
 
 class SCRegistry:
