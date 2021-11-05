@@ -72,7 +72,7 @@ class SCLogger(Logger):
                     time=self.time,
                     name=scope_name(child_info),
                     desc="created",
-                    parent="null",
+                    parent=None,
                     type="scope",
                 ).as_dict()
             )
@@ -156,7 +156,7 @@ class SCLogger(Logger):
                     time=self.time,
                     name=scope_name(child_info),
                     desc="exited",
-                    parent="null",
+                    parent=None,
                     type="task",
                 ).as_dict()
             )
