@@ -32,15 +32,15 @@ markers = [
 [tool.poetry.dependencies]
 attrs = "^21.2.0"
 pydantic = "^1.8.2"
-python = ">=3.6.1, <4.0"
+python = ">=3.6.2, <4.0"
 rich = "^9.13.0"
-trio = "^0.18.0"
+trio = "^0.19.0"
 trio-typing = "^0.5.0"
 typing-extensions = "^3"
 
 [tool.poetry.dev-dependencies]
 autoflake = "^1.4"
-black = "^20.8b1"
+black = "^21.10b0"
 ipdb = "^0.13.7"
 isort = "^5.7.0"
 mypy = "^0.812"
