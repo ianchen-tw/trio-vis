@@ -45,8 +45,9 @@ class RegisteredSCInfo:
 
     @classmethod
     def from_task(cls, task: TrioTask, serial_num: SerialNumberGen):
-        num = serial_num.draw(task.name)
-        name = f"{task.name}-{num}"
+        task_name: str = task.coro.cr_code.co_name
+        num = serial_num.draw(task_name)
+        name = f"{task_name}-{num}"
         return cls(name=name, serial_num=num, type="task")
 
     @classmethod
