@@ -3,19 +3,7 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, validator
 
-# only used for vscode intelliSense
-# ref: https://github.com/microsoft/python-language-server/issues/1898
-if TYPE_CHECKING:
-    import dataclasses
 
-    static_check_init_args = dataclasses.dataclass
-else:
-
-    def static_check_init_args(cls):
-        return cls
-
-
-@static_check_init_args
 class VisConfig(BaseModel):
 
     # Ignore trio's internal nursery/task
@@ -34,3 +22,4 @@ class VisConfig(BaseModel):
             raise ValueError(
                 f"[trio-vis] file exists with overwrite set to false:{filename}"
             )
+        return filename

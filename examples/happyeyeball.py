@@ -15,7 +15,7 @@ MAX_RETRY = 20
 
 def main():
     random.seed(3)
-    cfg = VisConfig(print_task_tree=True)
+    cfg = VisConfig(print_task_tree=True, log_filename="./sc-logs-happy-eyeball.json")
     trio.run(fetch_resource, instruments=[SC_Monitor(config=cfg)])
 
 
