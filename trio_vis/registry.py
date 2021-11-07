@@ -1,6 +1,8 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Dict, Literal, Optional, Union, cast
+from typing import Any, Dict, Optional, Union, cast
+
+from typing_extensions import Literal
 
 from .protocol import TrioNursery, TrioTask
 
