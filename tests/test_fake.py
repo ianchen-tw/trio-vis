@@ -1,7 +1,15 @@
 import rich
 
 from trio_vis.trio_fake import (FakeTrioNursery, FakeTrioTask,
-                                build_tree_from_json)
+                                build_tree_from_json, generate_fake_attr)
+
+
+def test_gen_fake_attr():
+    obj = generate_fake_attr(["a", "b", "c"], "something")
+    assert obj.a.b.c == "something"
+
+    obj = generate_fake_attr(["x"], "test")
+    assert obj.x == "test"
 
 
 def test_build_child_root_tree():

@@ -1,13 +1,14 @@
-import trio
 import random
+from typing import Optional, Protocol
+
 import attr
-from attr import attrs, attrib
-from typing import Protocol
-from trio import open_memory_channel
+import trio
+from attr import attrib, attrs
+from rich.live import Live
 from rich.table import Table
 from rich.text import Text
-from rich.live import Live
-from typing import Optional
+from trio import open_memory_channel
+
 from trio_vis import SC_Monitor, VisConfig
 
 NM_LOGS_SHOWN = 8
@@ -23,8 +24,8 @@ class Scope(Protocol):
 
 
 class STATUS:
-    OK: int = "Ok"
-    ERR: int = "Err"
+    OK: str = "Ok"
+    ERR: str = "Err"
 
 
 def get_scope(nursery):
