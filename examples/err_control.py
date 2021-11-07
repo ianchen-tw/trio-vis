@@ -8,7 +8,7 @@ from rich.table import Table
 from rich.text import Text
 from rich.live import Live
 from typing import Optional
-from trio_vis import SC_Monitor
+from trio_vis import SC_Monitor, VisConfig
 
 NM_LOGS_SHOWN = 8
 
@@ -157,7 +157,7 @@ class LowerCtrl:
 
 @attr.s(auto_attribs=True)
 class UpperCtrl:
-    nm_conn: int = 2
+    nm_conn: int = 3
 
     async def task_control_child(self, _id: int):
         """Start a service to keep monitoring children"""
@@ -210,10 +210,13 @@ async def CliApp(upper_ctrl):
 
 
 def main():
+    cfg = VisConfig(print_task_tree=True, log_filename="./sc-logs-err-control.json")
+
     upper_ctrl = UpperCtrl()
     # trio.run(upper_ctrl.start_control)
     # trio.run(CliApp, upper_ctrl)
-    trio.run(upper_ctrl.start_control, instruments=[SC_Monitor()])
+
+    trio.run(upper_ctrl.start_control, instruments=[SC_Monitor(config=cfg)])
 
 
 if __name__ == "__main__":
