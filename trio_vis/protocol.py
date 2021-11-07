@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Coroutine
 
 from typing_extensions import Protocol
 
@@ -17,6 +17,9 @@ class TrioTask(Protocol):
 
     name: str
     child_nurseries: List["TrioNursery"]
+
+    # Internal object link to the coroutine
+    coro: Coroutine
 
 
 class TrioInstrument(Protocol):
