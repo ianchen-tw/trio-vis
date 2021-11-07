@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union, cast
 
 from rich.console import Console, ConsoleOptions, RenderResult
 from rich.tree import Tree as RichTree
@@ -111,6 +111,23 @@ class FakeNode:
         self._nodes[name] = node
 
 
+def generate_fake_attr(nested_list: List[str], val: Any):
+    """Generate a nested attribute"""
+
+    class FakeObject:
+        def __init__(self):
+            pass
+
+    obj = None
+
+    target = val
+    for attr in nested_list[::-1]:
+        obj = FakeObject()
+        setattr(obj, attr, target)
+        target = obj
+    return target
+
+
 class FakeTrioNursery(FakeNode, TrioNursery):
     """Represent the trio internal type."""
 
@@ -156,6 +173,7 @@ class FakeTrioTask(FakeNode, TrioTask):
 
     def __init__(self, name: str):
         super().__init__(name)
+        self.coro = generate_fake_attr(["cr_code", "co_name"], name)
         print(f"get root-> {super().tree_root}")
 
     @property

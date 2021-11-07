@@ -27,7 +27,7 @@ class SCEvent:
     desc: str
     name: str
     type: str
-    parent: str
+    parent: Optional[str]
 
     def as_dict(self) -> Dict:
         return attr.asdict(self)

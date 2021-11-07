@@ -1,4 +1,4 @@
-from typing import List, Coroutine
+from typing import Coroutine, List
 
 from typing_extensions import Protocol
 
