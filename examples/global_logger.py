@@ -1,6 +1,8 @@
+import random
+
 import trio
 from trio_typing import Nursery
-import random
+
 from trio_vis import SC_Monitor, VisConfig
 
 
@@ -34,6 +36,4 @@ async def main():
 
 if __name__ == "__main__":
     cfg = VisConfig(log_filename="./sc-logs-global-logger.json")
-    trio.run(main, instruments=[SC_Monitor(config=cfg)])
-
-    pass
+    trio.run(main, instruments=[SC_Monitor(config=cfg)])  # type: ignore
