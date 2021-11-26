@@ -30,7 +30,8 @@ class SCEvent:
     parent: Optional[str]
 
     def as_dict(self) -> Dict:
-        return attr.asdict(self)
+        # Parent need to be undefined if not specified
+        return {k: v for k, v in attr.asdict(self).items() if v is not None}
 
 
 def get_info(
@@ -197,8 +198,12 @@ class SCLogger(Logger):
             print("exit unknown")
 
     def _write_log(self):
+        sc_logs = {
+            "config": {"makeDirectScopeTransparent": True},
+            "runRecords": self.events,
+        }
         with open(self.log_filename, "w") as log_file:
-            json.dump(self.events, log_file, indent=4)
+            json.dump(sc_logs, log_file, indent=4)
 
     @property
     def time(self) -> int:
